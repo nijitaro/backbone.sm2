@@ -29,9 +29,9 @@
       }
     },
 
-    onPlay: function(sound) { this.$(".button").text('pause'); },
-    onStop: function(sound) { this.$(".button").text('play'); },
-    onPause: function(sound) { this.$(".button").text('play'); },
+    onPlay: function(sound) { this.$(".play").text('pause'); },
+    onStop: function(sound) { this.$(".play").text('play'); },
+    onPause: function(sound) { this.$(".play").text('play'); },
 
     onQueueChange: function(playable) {
       var $queue = this.$('.queue');

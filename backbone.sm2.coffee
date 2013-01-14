@@ -35,27 +35,31 @@
         @sound.play()
       else
         playable = @pop()
+
+        # reached the end of the queue
         if not playable
           this.trigger('queueEnd')
           return
+
         @sound = soundManager.createSound
           id: playable.id
           url: if _.isFunction(playable.url) then playable.url else playable.url
           onload: =>
-            @trigger('playStart', @sound)
+            @trigger('playStart', playable, @sound)
             @sound.play()
+        @sound.playable = playable
         @sound.load()
-      @trigger('play', @sound)
+      @trigger('play', playable, @sound)
 
     pause: ->
       return unless @sound?
       @sound.pause()
-      @trigger('pause', @sound)
+      @trigger('pause', @sound.playable, @sound)
 
     stop: (destruct = false) ->
       return unless @sound?
       @sound.stop()
-      @trigger('stop', @sound)
+      @trigger('stop', @sound.playable, @sound)
       if destruct
         @sound.destruct()
         @sound = undefined
@@ -78,7 +82,7 @@
         playlist.shift(1)
       else
         @queue.shift(1)
-      this.trigger('queuePop', playable)
+      @trigger('queuePop', playable)
       playable
 
     isPlayable: (playable) ->

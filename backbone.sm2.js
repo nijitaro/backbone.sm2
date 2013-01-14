@@ -66,13 +66,14 @@ var __hasProp = {}.hasOwnProperty,
           id: playable.id,
           url: _.isFunction(playable.url) ? playable.url : playable.url,
           onload: function() {
-            _this.trigger('playStart', _this.sound);
+            _this.trigger('playStart', playable, _this.sound);
             return _this.sound.play();
           }
         });
+        this.sound.playable = playable;
         this.sound.load();
       }
-      return this.trigger('play', this.sound);
+      return this.trigger('play', playable, this.sound);
     };
 
     Player.prototype.pause = function() {
@@ -80,7 +81,7 @@ var __hasProp = {}.hasOwnProperty,
         return;
       }
       this.sound.pause();
-      return this.trigger('pause', this.sound);
+      return this.trigger('pause', this.sound.playable, this.sound);
     };
 
     Player.prototype.stop = function(destruct) {
@@ -91,7 +92,7 @@ var __hasProp = {}.hasOwnProperty,
         return;
       }
       this.sound.stop();
-      this.trigger('stop', this.sound);
+      this.trigger('stop', this.sound.playable, this.sound);
       if (destruct) {
         this.sound.destruct();
         return this.sound = void 0;
