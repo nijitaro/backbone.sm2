@@ -10,59 +10,66 @@
     _.extend this.prototype, Backbone.Events
 
     constructor: ->
-      @_sound = undefined
-      @_queue = []
+      @sound = undefined
+      @queue = []
 
-    queue: (playable) ->
-      @_queue.push(playable)
-      this.trigger('queue', playable)
+    add: (playable) ->
+      @queue.push(playable)
+      @trigger('queueAdd', playable)
 
     isActive: (playable, playState = 0) ->
       if playable
-        @_sound?.playState == playState and @_sound?.id == playable.id
+        @sound?.playState == playState and @sound?.id == playable.id
       else
-        @_sound?.playState == playState
+        @sound?.playState == playState
 
     isPlaying: (playable) ->
-      @isActive(playable, 1) and not @_sound?.paused
+      @isActive(playable, 1) and not @sound?.paused
+
+    isPaused: (playable) ->
+      @isActive(playable, 1) and @sound?.paused
 
     play: ->
       return if @isPlaying()
-      if @_sound?
-        @_sound.play()
+      if @sound?
+        @sound.play()
       else
-        playable = @getNextPlayable()
-        @_sound = soundManager.createSound
+        playable = @pop()
+        @sound = soundManager.createSound
           id: playable.id
           url: if _.isFunction(playable.url) then playable.url else playable.url
-          onload: => @_sound.play()
-        @_sound.load()
-      this.trigger('play', @_sound)
+          onload: =>
+            @trigger('playStart', @sound)
+            @sound.play()
+        @sound.load()
+      @trigger('play', @sound)
 
     pause: ->
-      return unless @_sound?
-      @_sound.pause()
-      this.trigger('pause', @_sound)
+      return unless @sound?
+      @sound.pause()
+      @trigger('pause', @sound)
 
     stop: ->
-      return unless @_sound?
-      @_sound.stop()
-      this.trigger('stop', @_sound)
+      return unless @sound?
+      @sound.stop()
+      @trigger('stop', @sound)
 
     setPosition: (position, relative = false) ->
-      return unless @_sound?
-      position = if relative then @_sound.position + position else position
-      @_sound.setPosition(position)
+      return unless @sound?
+      position = if relative then @sound.position + position else position
+      @sound.setPosition(position)
 
-    getNextPlayable: ->
-      return if @_queue.length == 0
-      peek = @_queue[0]
-      if _.isArray(@_queue[0])
+    pop: ->
+      return if @queue.length == 0
+      peek = @queue[0]
+      playable = if _.isArray(@queue[0])
         # if 1 element left in playlist remove it from queue
-        playlist = if peek.length == 1 then @_queue.shift(1) else @_queue[0]
+        playlist = if peek.length == 1 then @queue.shift(1) else @queue[0]
         playlist.shift(1)
       else
-        @_queue.shift(1)
+        @queue.shift(1)
+      this.trigger('queuePop', playable)
+      playable
 
     isPlayable: (playable) ->
       playable? and playable.url and playable.id
@@ -74,6 +81,15 @@
     className: 'app'
 
     initialize: (options) ->
-      this.player = options?.player or new Player()
+      @player = options?.player or new Player()
+      @listenTo @player, 'play', @onPlay
+      @listenTo @player, 'stop', @onStop
+      @listenTo @player, 'pause', @onPause
+      @listenTo @player, 'queue queuePop', @onQueueChange
+
+    onPlay: ->
+    onStop: ->
+    onPause: ->
+    onQueueChange: ->
 
   {Player, PlayerView}

@@ -5,16 +5,37 @@
 <script src="soundmanager2.js"></script>
 <script src="backbone.sm2.js"></script>
 <div id="player">
+  <a class="button" href>play</a>
+  <ul class="queue"></ul>
 </div>
 <script>
   var PlayerView = Backbone.SM2.PlayerView.extend({
     el: $('#player'),
+
+    events: {
+      "click .button": function(e) {
+        e.preventDefault();
+        if (this.player.isPlaying()) {
+          this.player.pause();
+        } else {
+          this.player.play();
+        }
+      }
+    },
+
+    onPlay: function(sound) { this.$(".button").text('pause'); },
+    onStop: function(sound) { this.$(".button").text('play'); },
+    onPause: function(sound) { this.$(".button").text('play'); },
+    onQueueChange: function(playable) {
+      this.player.queue.forEach(function(item) {
+        console.log(item);
+      });
+    }
   });
 
   function ready() {
     var view = new PlayerView()
-    view.player.queue({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 1});
-    view.player.play();
+    view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: '1'});
     view.render()
   }
 

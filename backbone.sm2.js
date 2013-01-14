@@ -17,13 +17,13 @@ var __hasProp = {}.hasOwnProperty,
     _.extend(Player.prototype, Backbone.Events);
 
     function Player() {
-      this._sound = void 0;
-      this._queue = [];
+      this.sound = void 0;
+      this.queue = [];
     }
 
-    Player.prototype.queue = function(playable) {
-      this._queue.push(playable);
-      return this.trigger('queue', playable);
+    Player.prototype.add = function(playable) {
+      this.queue.push(playable);
+      return this.trigger('queueAdd', playable);
     };
 
     Player.prototype.isActive = function(playable, playState) {
@@ -32,15 +32,20 @@ var __hasProp = {}.hasOwnProperty,
         playState = 0;
       }
       if (playable) {
-        return ((_ref = this._sound) != null ? _ref.playState : void 0) === playState && ((_ref1 = this._sound) != null ? _ref1.id : void 0) === playable.id;
+        return ((_ref = this.sound) != null ? _ref.playState : void 0) === playState && ((_ref1 = this.sound) != null ? _ref1.id : void 0) === playable.id;
       } else {
-        return ((_ref2 = this._sound) != null ? _ref2.playState : void 0) === playState;
+        return ((_ref2 = this.sound) != null ? _ref2.playState : void 0) === playState;
       }
     };
 
     Player.prototype.isPlaying = function(playable) {
       var _ref;
-      return this.isActive(playable, 1) && !((_ref = this._sound) != null ? _ref.paused : void 0);
+      return this.isActive(playable, 1) && !((_ref = this.sound) != null ? _ref.paused : void 0);
+    };
+
+    Player.prototype.isPaused = function(playable) {
+      var _ref;
+      return this.isActive(playable, 1) && ((_ref = this.sound) != null ? _ref.paused : void 0);
     };
 
     Player.prototype.play = function() {
@@ -49,61 +54,59 @@ var __hasProp = {}.hasOwnProperty,
       if (this.isPlaying()) {
         return;
       }
-      if (this._sound != null) {
-        this._sound.play();
+      if (this.sound != null) {
+        this.sound.play();
       } else {
-        playable = this.getNextPlayable();
-        this._sound = soundManager.createSound({
+        playable = this.pop();
+        this.sound = soundManager.createSound({
           id: playable.id,
           url: _.isFunction(playable.url) ? playable.url : playable.url,
           onload: function() {
-            return _this._sound.play();
+            _this.trigger('playStart', _this.sound);
+            return _this.sound.play();
           }
         });
-        this._sound.load();
+        this.sound.load();
       }
-      return this.trigger('play', this._sound);
+      return this.trigger('play', this.sound);
     };
 
     Player.prototype.pause = function() {
-      if (this._sound == null) {
+      if (this.sound == null) {
         return;
       }
-      this._sound.pause();
-      return this.trigger('pause', this._sound);
+      this.sound.pause();
+      return this.trigger('pause', this.sound);
     };
 
     Player.prototype.stop = function() {
-      if (this._sound == null) {
+      if (this.sound == null) {
         return;
       }
-      this._sound.stop();
-      return this.trigger('stop', this._sound);
+      this.sound.stop();
+      return this.trigger('stop', this.sound);
     };
 
     Player.prototype.setPosition = function(position, relative) {
       if (relative == null) {
         relative = false;
       }
-      if (this._sound == null) {
+      if (this.sound == null) {
         return;
       }
-      position = relative ? this._sound.position + position : position;
-      return this._sound.setPosition(position);
+      position = relative ? this.sound.position + position : position;
+      return this.sound.setPosition(position);
     };
 
-    Player.prototype.getNextPlayable = function() {
-      var peek, playlist;
-      if (this._queue.length === 0) {
+    Player.prototype.pop = function() {
+      var peek, playable, playlist;
+      if (this.queue.length === 0) {
         return;
       }
-      peek = this._queue[0];
-      if (_.isArray(this._queue[0])) {
-        playlist = peek.length === 1 ? this._queue.shift(1) : this._queue[0];
-        return playlist.shift(1);
-      } else {
-        return this._queue.shift(1);
-      }
+      peek = this.queue[0];
+      playable = _.isArray(this.queue[0]) ? (playlist = peek.length === 1 ? this.queue.shift(1) : this.queue[0], playlist.shift(1)) : this.queue.shift(1);
+      this.trigger('queuePop', playable);
+      return playable;
     };
 
     Player.prototype.isPlayable = function(playable) {
@@ -130,8 +133,20 @@ var __hasProp = {}.hasOwnProperty,
     PlayerView.prototype.className = 'app';
 
     PlayerView.prototype.initialize = function(options) {
-      return this.player = (options != null ? options.player : void 0) || new Player();
+      this.player = (options != null ? options.player : void 0) || new Player();
+      this.listenTo(this.player, 'play', this.onPlay);
+      this.listenTo(this.player, 'stop', this.onStop);
+      this.listenTo(this.player, 'pause', this.onPause);
+      return this.listenTo(this.player, 'queue queuePop', this.onQueueChange);
     };
+
+    PlayerView.prototype.onPlay = function() {};
+
+    PlayerView.prototype.onStop = function() {};
+
+    PlayerView.prototype.onPause = function() {};
+
+    PlayerView.prototype.onQueueChange = function() {};
 
     return PlayerView;
 
