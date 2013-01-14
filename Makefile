@@ -4,9 +4,10 @@ LIB = $(SRC:%.coffee=%.js)
 all: build
 
 build: $(LIB)
+	coffee -bc $(SRC)
 
 watch:
-	watch -n1 $(MAKE)
+	coffee --watch -bc $(SRC)
 
 clean:
 	rm -f *.js
@@ -16,6 +17,3 @@ test-server:
 
 test:
 	$(MAKE) -j2 test-server watch
-
-%.js: %.coffee
-	coffee -bcp $< > $@
