@@ -69,6 +69,7 @@
         @sound = undefined
 
     next: ->
+      return unless @sound?
       @trigger('track:skip', @sound.playable, @sound)
       @stop(true) if @sound?
       @play()

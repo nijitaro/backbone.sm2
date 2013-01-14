@@ -105,6 +105,9 @@ var __hasProp = {}.hasOwnProperty,
     };
 
     Player.prototype.next = function() {
+      if (this.sound == null) {
+        return;
+      }
       this.trigger('track:skip', this.sound.playable, this.sound);
       if (this.sound != null) {
         this.stop(true);
