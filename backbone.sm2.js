@@ -68,6 +68,10 @@ var __hasProp = {}.hasOwnProperty,
           onload: function() {
             _this.trigger('playStart', playable, _this.sound);
             return _this.sound.play();
+          },
+          onfinish: function() {
+            _this.trigger('finish', playable, _this.sound);
+            return _this.next();
           }
         });
         this.sound.playable = playable;

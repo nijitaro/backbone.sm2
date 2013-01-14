@@ -47,6 +47,9 @@
           onload: =>
             @trigger('playStart', playable, @sound)
             @sound.play()
+          onfinish: =>
+            @trigger('finish', playable, @sound)
+            @next()
         @sound.playable = playable
         @sound.load()
       @trigger('play', playable, @sound)
