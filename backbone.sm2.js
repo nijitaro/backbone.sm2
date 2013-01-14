@@ -179,10 +179,12 @@ var __hasProp = {}.hasOwnProperty,
     PlayerView.prototype.initialize = function(options) {
       this.player = (options != null ? options.player : void 0) || new Player();
       if (!(options != null ? options.disablePlayerEvents : void 0)) {
-        this.listenTo(this.player, 'track:play', this.onPlay);
-        this.listenTo(this.player, 'track:stop', this.onStop);
-        this.listenTo(this.player, 'track:pause', this.onPause);
-        return this.listenTo(this.player, 'queue:add queue:pop', this.onQueueChange);
+        return this.listenTo(this.player, {
+          'track:play': this.onPlay,
+          'track:stop': this.onStop,
+          'track:pause': this.onPause,
+          'queue:add queue:pop': this.onQueueChange
+        });
       }
     };
 

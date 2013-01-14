@@ -113,10 +113,11 @@
     initialize: (options) ->
       @player = options?.player or new Player()
       unless options?.disablePlayerEvents
-        @listenTo @player, 'track:play', @onPlay
-        @listenTo @player, 'track:stop', @onStop
-        @listenTo @player, 'track:pause', @onPause
-        @listenTo @player, 'queue:add queue:pop', @onQueueChange
+        @listenTo @player,
+          'track:play': @onPlay
+          'track:stop': @onStop
+          'track:pause': @onPause
+          'queue:add queue:pop': @onQueueChange
 
     onPlay: ->
     onStop: ->
