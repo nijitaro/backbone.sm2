@@ -11,7 +11,93 @@ var __hasProp = {}.hasOwnProperty,
     return root.Backbone.SM2 = factory(root.Backbone, root._);
   }
 })(this, function(Backbone, _) {
-  var Player, PlayerView;
+  var Player, PlayerView, QueueCursor;
+  QueueCursor = (function() {
+
+    function QueueCursor(queue) {
+      this.queue = queue;
+      this.ref = -1;
+    }
+
+    QueueCursor.prototype.cur = function() {
+      if (_.isArray(this.ref)) {
+        return this.queue[this.ref[0]][this.ref[1]];
+      } else {
+        return this.queue[this.ref];
+      }
+    };
+
+    QueueCursor.prototype.peek = function() {
+      return this.nextImpl().next;
+    };
+
+    QueueCursor.prototype.next = function() {
+      var next, ref, _ref;
+      _ref = this.nextImpl(), next = _ref.next, ref = _ref.ref;
+      this.ref = ref;
+      return next;
+    };
+
+    QueueCursor.prototype.prev = function() {
+      var prev, ref, _ref;
+      _ref = this.prevImpl(), prev = _ref.prev, ref = _ref.ref;
+      this.ref = ref;
+      return prev;
+    };
+
+    QueueCursor.prototype.prevImpl = function() {
+      var prev, ref;
+      if (_.isArray(this.ref)) {
+        ref = _.toArray(this.ref);
+        prev = this.queue[ref[0]][ref[1] - 1];
+        if (prev) {
+          ref[1] = ref[1] - 1;
+        } else {
+          prev = this.queue[ref[0] - 1];
+          ref = ref[0] - 1;
+        }
+      } else {
+        ref = this.ref - 1;
+        prev = this.queue[ref];
+      }
+      if (_.isArray(prev)) {
+        ref = [ref, prev.length - 1];
+        prev = prev[prev.length - 1];
+      }
+      return {
+        ref: ref,
+        prev: prev
+      };
+    };
+
+    QueueCursor.prototype.nextImpl = function() {
+      var next, ref;
+      if (_.isArray(this.ref)) {
+        ref = _.toArray(this.ref);
+        next = this.queue[ref[0]][ref[1] + 1];
+        if (next) {
+          ref[1] = ref[1] + 1;
+        } else {
+          next = this.queue[ref[0] + 1];
+          ref = ref[0] + 1;
+        }
+      } else {
+        ref = this.ref + 1;
+        next = this.queue[ref];
+      }
+      if (_.isArray(next)) {
+        ref = [ref, 0];
+        next = next[0];
+      }
+      return {
+        ref: ref,
+        next: next
+      };
+    };
+
+    return QueueCursor;
+
+  })();
   Player = (function() {
 
     _.extend(Player.prototype, Backbone.Events);
@@ -19,7 +105,7 @@ var __hasProp = {}.hasOwnProperty,
     function Player() {
       this.sound = void 0;
       this.queue = [];
-      this.current = -1;
+      this.cur = new QueueCursor(this.queue);
     }
 
     Player.prototype.add = function(playable) {
@@ -50,36 +136,21 @@ var __hasProp = {}.hasOwnProperty,
     };
 
     Player.prototype.play = function() {
-      var playable,
-        _this = this;
+      var playable;
       if (this.isPlaying()) {
         return;
       }
       if (this.sound != null) {
         this.sound.play();
+        this.trigger('track:play', playable, this.sound);
       } else {
-        playable = this.getNext();
+        playable = this.cur.next();
         if (!playable) {
           this.trigger('queue:end');
           return;
         }
-        this.sound = soundManager.createSound({
-          id: playable.id,
-          url: _.isFunction(playable.url) ? playable.url : playable.url,
-          onload: function() {
-            _this.trigger('track:playStart', playable, _this.sound);
-            _this.sound.play();
-            return _this.preloadNext(_this.sound);
-          },
-          onfinish: function() {
-            _this.trigger('track:finish', playable, _this.sound);
-            return _this.next();
-          }
-        });
-        this.sound.playable = playable;
-        this.sound.load();
+        this.setPlayable(playable);
       }
-      this.trigger('track:play', playable, this.sound);
       return this.sound;
     };
 
@@ -112,69 +183,45 @@ var __hasProp = {}.hasOwnProperty,
       if (this.sound == null) {
         return;
       }
-      this.trigger('track:skip', this.sound.playable, this.sound);
-      if (this.sound != null) {
-        this.stop(true);
-      }
-      return this.play();
+      this.stop(true);
+      this.play();
+      this.trigger('queue:next', this.sound.playable, this.sound);
+      return this.sound;
     };
 
-    Player.prototype.setPosition = function(position, relative) {
-      if (relative == null) {
-        relative = false;
-      }
+    Player.prototype.prev = function() {
+      var playable;
       if (this.sound == null) {
         return;
       }
-      position = relative ? this.sound.position + position : position;
-      return this.sound.setPosition(position);
-    };
-
-    Player.prototype.pop = function() {
-      var peek, playable, playlist;
-      if (this.queue.length === 0) {
+      this.stop(true);
+      playable = this.cur.prev();
+      if (!playable) {
         return;
       }
-      peek = this.queue[0];
-      playable = _.isArray(this.queue[0]) ? (playlist = peek.length === 1 ? this.queue.shift(1) : this.queue[0], playlist.shift(1)) : this.queue.shift(1);
-      this.trigger('queue:pop', playable);
-      return playable;
+      this.setPlayable(playable);
+      this.trigger('queue:prev', this.sound.playable, this.sound);
+      return this.sound;
     };
 
-    Player.prototype.getNext = function() {
-      var next;
-      if (this.queue.length === 0) {
-        return;
-      }
-      if (_.isArray(this.current)) {
-        next = this.queue[this.current[0]][this.current[1] + 1];
-        if (next) {
-          this.current[1]++;
-        } else {
-          next = this.queue[this.current[0] + 1];
-          this.current = this.current[0] + 1;
+    Player.prototype.setPlayable = function(playable) {
+      var _this = this;
+      this.sound = soundManager.createSound({
+        id: playable.id,
+        url: _.isFunction(playable.url) ? playable.url : playable.url,
+        onload: function() {
+          _this.trigger('track:playStart', playable, _this.sound);
+          _this.sound.play();
+          return _this.preloadNext(_this.sound);
+        },
+        onfinish: function() {
+          _this.trigger('track:finish', playable, _this.sound);
+          return _this.next();
         }
-      } else {
-        next = this.queue[++this.current];
-      }
-      if (_.isArray(next)) {
-        next = next[0];
-        if (!_.isArray(this.current)) {
-          this.current = [this.current, 0];
-        }
-      }
-      this.trigger('queue:next', next);
-      return next;
-    };
-
-    Player.prototype.isPlayable = function(playable) {
-      return (playable != null) && playable.url && playable.id;
-    };
-
-    Player.prototype.ensureSM2 = function() {
-      if (!soundManager.ok()) {
-        throw new Events("SoundManager2 isn't ready");
-      }
+      });
+      this.sound.playable = playable;
+      this.trigger('track:play', playable, this.sound);
+      return this.sound.load();
     };
 
     return Player;

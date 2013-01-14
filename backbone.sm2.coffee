@@ -6,13 +6,72 @@
     root.Backbone.SM2 = factory(root.Backbone, root._)
 ) this, (Backbone, _) ->
 
+  class QueueCursor
+    constructor: (queue) ->
+      @queue = queue
+      @ref = -1
+
+    cur: ->
+      if _.isArray(@ref) then @queue[@ref[0]][@ref[1]] else @queue[@ref]
+
+    peek: ->
+      @nextImpl().next
+
+    next: ->
+      {next, ref} = @nextImpl()
+      @ref = ref
+      next
+
+    prev: ->
+      {prev, ref} = @prevImpl()
+      @ref = ref
+      prev
+
+    prevImpl: ->
+      if _.isArray(@ref)
+        ref = _.toArray(@ref)
+        prev = @queue[ref[0]][ref[1] - 1]
+        if prev
+          ref[1] = ref[1] - 1
+        else
+          prev = @queue[ref[0] - 1]
+          ref = ref[0] - 1
+      else
+        ref = @ref - 1
+        prev = @queue[ref]
+
+      if _.isArray(prev)
+        ref = [ref, prev.length - 1]
+        prev = prev[prev.length - 1]
+
+      {ref, prev}
+
+    nextImpl: ->
+      if _.isArray(@ref)
+        ref = _.toArray(@ref)
+        next = @queue[ref[0]][ref[1] + 1]
+        if next
+          ref[1] = ref[1] + 1
+        else
+          next = @queue[ref[0] + 1]
+          ref = ref[0] + 1
+      else
+        ref = @ref + 1
+        next = @queue[ref]
+
+      if _.isArray(next)
+        ref = [ref, 0]
+        next = next[0]
+
+      {ref, next}
+
   class Player
     _.extend this.prototype, Backbone.Events
 
     constructor: ->
       @sound = undefined
       @queue = []
-      @current = -1
+      @cur = new QueueCursor(@queue)
 
     add: (playable) ->
       @queue.push(playable)
@@ -34,27 +93,16 @@
       return if @isPlaying()
       if @sound?
         @sound.play()
+        @trigger('track:play', playable, @sound)
       else
-        playable = @getNext()
+        playable = @cur.next()
 
         # reached the end of the queue
         if not playable
           this.trigger('queue:end')
           return
 
-        @sound = soundManager.createSound
-          id: playable.id
-          url: if _.isFunction(playable.url) then playable.url else playable.url
-          onload: =>
-            @trigger('track:playStart', playable, @sound)
-            @sound.play()
-            @preloadNext(@sound)
-          onfinish: =>
-            @trigger('track:finish', playable, @sound)
-            @next()
-        @sound.playable = playable
-        @sound.load()
-      @trigger('track:play', playable, @sound)
+        @setPlayable(playable)
       @sound
 
     preloadNext: (sound) ->
@@ -75,51 +123,38 @@
 
     next: ->
       return unless @sound?
-      @trigger('track:skip', @sound.playable, @sound)
-      @stop(true) if @sound?
+      @stop(true)
       @play()
+      @trigger('queue:next', @sound.playable, @sound)
+      @sound
 
-    setPosition: (position, relative = false) ->
+    prev: ->
       return unless @sound?
-      position = if relative then @sound.position + position else position
-      @sound.setPosition(position)
+      @stop(true)
+      playable = @cur.prev()
 
-    pop: ->
-      return if @queue.length == 0
-      peek = @queue[0]
-      playable = if _.isArray(@queue[0])
-        # if 1 element left in playlist remove it from queue
-        playlist = if peek.length == 1 then @queue.shift(1) else @queue[0]
-        playlist.shift(1)
-      else
-        @queue.shift(1)
-      @trigger('queue:pop', playable)
-      playable
+      # reached the start of the queue
+      if not playable
+        return
 
-    getNext: ->
-      return if @queue.length == 0
-      if(_.isArray(@current))
-        next = @queue[@current[0]][@current[1] + 1]
-        if(next)
-          @current[1]++
-        else
-          next = @queue[@current[0] + 1]
-          @current = @current[0] + 1;
-      else
-        next = @queue[++@current]
+      @setPlayable(playable)
+      @trigger('queue:prev', @sound.playable, @sound)
+      @sound
 
-      if(_.isArray(next))
-        next = next[0];
-        if(!_.isArray(@current))
-          @current = [@current, 0]
-      @trigger('queue:next', next)
-      next
-
-    isPlayable: (playable) ->
-      playable? and playable.url and playable.id
-
-    ensureSM2: ->
-      throw new Events("SoundManager2 isn't ready") unless soundManager.ok()
+    setPlayable: (playable) ->
+      @sound = soundManager.createSound
+        id: playable.id
+        url: if _.isFunction(playable.url) then playable.url else playable.url
+        onload: =>
+          @trigger('track:playStart', playable, @sound)
+          @sound.play()
+          @preloadNext(@sound)
+        onfinish: =>
+          @trigger('track:finish', playable, @sound)
+          @next()
+      @sound.playable = playable
+      @trigger('track:play', playable, @sound)
+      @sound.load()
 
   class PlayerView extends Backbone.View
     className: 'app'

@@ -5,6 +5,7 @@
 <script src="soundmanager2.js"></script>
 <script src="backbone.sm2.js"></script>
 <div id="player">
+  <a class="prev" href>prev</a>
   <a class="play" href>play</a>
   <a class="next" href>next</a>
   <p class="current"></p>
@@ -26,6 +27,10 @@
       "click .next": function(e) {
         e.preventDefault();
         this.player.next();
+      },
+      "click .prev": function(e) {
+        e.preventDefault();
+        this.player.prev();
       }
     },
 
@@ -63,12 +68,12 @@
         {url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's4'}
     ]);
     view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's5'});
-    view.player.on('all', function() {
+    view.player.on('all', function(ev, track) {
       var args = _.toArray(arguments);
-      console.log('player event: ' + args);
+      console.log('player event: ' + ev + ' track: ' + track.id);
     });
     view.render()
   }
 
-  soundManager.setup({url: "swf", onready: ready});
+  soundManager.setup({url: "swf", onready: ready, debugMode: false});
 </script>
