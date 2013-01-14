@@ -15,7 +15,7 @@
 
     add: (playable) ->
       @queue.push(playable)
-      @trigger('queueAdd', playable)
+      @trigger('queue:add', playable)
 
     isActive: (playable, playState = 0) ->
       if playable
@@ -38,36 +38,38 @@
 
         # reached the end of the queue
         if not playable
-          this.trigger('queueEnd')
+          this.trigger('queue:end')
           return
 
         @sound = soundManager.createSound
           id: playable.id
           url: if _.isFunction(playable.url) then playable.url else playable.url
           onload: =>
-            @trigger('playStart', playable, @sound)
+            @trigger('track:playStart', playable, @sound)
             @sound.play()
           onfinish: =>
-            @trigger('finish', playable, @sound)
+            @trigger('track:finish', playable, @sound)
             @next()
         @sound.playable = playable
         @sound.load()
-      @trigger('play', playable, @sound)
+      @trigger('track:play', playable, @sound)
+      @sound
 
     pause: ->
       return unless @sound?
       @sound.pause()
-      @trigger('pause', @sound.playable, @sound)
+      @trigger('track:pause', @sound.playable, @sound)
 
     stop: (destruct = false) ->
       return unless @sound?
       @sound.stop()
-      @trigger('stop', @sound.playable, @sound)
+      @trigger('track:stop', @sound.playable, @sound)
       if destruct
         @sound.destruct()
         @sound = undefined
 
     next: ->
+      @trigger('track:skip', @sound.playable, @sound)
       @stop(true) if @sound?
       @play()
 
@@ -85,7 +87,7 @@
         playlist.shift(1)
       else
         @queue.shift(1)
-      @trigger('queuePop', playable)
+      @trigger('queue:pop', playable)
       playable
 
     isPlayable: (playable) ->
@@ -100,10 +102,10 @@
     initialize: (options) ->
       @player = options?.player or new Player()
       unless options?.disablePlayerEvents
-        @listenTo @player, 'play', @onPlay
-        @listenTo @player, 'stop', @onStop
-        @listenTo @player, 'pause', @onPause
-        @listenTo @player, 'queueAdd queuePop', @onQueueChange
+        @listenTo @player, 'track:play', @onPlay
+        @listenTo @player, 'track:stop', @onStop
+        @listenTo @player, 'track:pause', @onPause
+        @listenTo @player, 'queue:add queue:pop', @onQueueChange
 
     onPlay: ->
     onStop: ->

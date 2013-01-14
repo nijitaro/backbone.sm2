@@ -58,6 +58,10 @@
     view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: '1'});
     view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: '2'});
     view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: '3'});
+    view.player.on('all', function() {
+      var args = _.toArray(arguments);
+      console.log('player event: ' + args);
+    });
     view.render()
   }
 

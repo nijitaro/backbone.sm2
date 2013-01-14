@@ -23,7 +23,7 @@ var __hasProp = {}.hasOwnProperty,
 
     Player.prototype.add = function(playable) {
       this.queue.push(playable);
-      return this.trigger('queueAdd', playable);
+      return this.trigger('queue:add', playable);
     };
 
     Player.prototype.isActive = function(playable, playState) {
@@ -59,25 +59,26 @@ var __hasProp = {}.hasOwnProperty,
       } else {
         playable = this.pop();
         if (!playable) {
-          this.trigger('queueEnd');
+          this.trigger('queue:end');
           return;
         }
         this.sound = soundManager.createSound({
           id: playable.id,
           url: _.isFunction(playable.url) ? playable.url : playable.url,
           onload: function() {
-            _this.trigger('playStart', playable, _this.sound);
+            _this.trigger('track:playStart', playable, _this.sound);
             return _this.sound.play();
           },
           onfinish: function() {
-            _this.trigger('finish', playable, _this.sound);
+            _this.trigger('track:finish', playable, _this.sound);
             return _this.next();
           }
         });
         this.sound.playable = playable;
         this.sound.load();
       }
-      return this.trigger('play', playable, this.sound);
+      this.trigger('track:play', playable, this.sound);
+      return this.sound;
     };
 
     Player.prototype.pause = function() {
@@ -85,7 +86,7 @@ var __hasProp = {}.hasOwnProperty,
         return;
       }
       this.sound.pause();
-      return this.trigger('pause', this.sound.playable, this.sound);
+      return this.trigger('track:pause', this.sound.playable, this.sound);
     };
 
     Player.prototype.stop = function(destruct) {
@@ -96,7 +97,7 @@ var __hasProp = {}.hasOwnProperty,
         return;
       }
       this.sound.stop();
-      this.trigger('stop', this.sound.playable, this.sound);
+      this.trigger('track:stop', this.sound.playable, this.sound);
       if (destruct) {
         this.sound.destruct();
         return this.sound = void 0;
@@ -104,6 +105,7 @@ var __hasProp = {}.hasOwnProperty,
     };
 
     Player.prototype.next = function() {
+      this.trigger('track:skip', this.sound.playable, this.sound);
       if (this.sound != null) {
         this.stop(true);
       }
@@ -128,7 +130,7 @@ var __hasProp = {}.hasOwnProperty,
       }
       peek = this.queue[0];
       playable = _.isArray(this.queue[0]) ? (playlist = peek.length === 1 ? this.queue.shift(1) : this.queue[0], playlist.shift(1)) : this.queue.shift(1);
-      this.trigger('queuePop', playable);
+      this.trigger('queue:pop', playable);
       return playable;
     };
 
@@ -158,10 +160,10 @@ var __hasProp = {}.hasOwnProperty,
     PlayerView.prototype.initialize = function(options) {
       this.player = (options != null ? options.player : void 0) || new Player();
       if (!(options != null ? options.disablePlayerEvents : void 0)) {
-        this.listenTo(this.player, 'play', this.onPlay);
-        this.listenTo(this.player, 'stop', this.onStop);
-        this.listenTo(this.player, 'pause', this.onPause);
-        return this.listenTo(this.player, 'queueAdd queuePop', this.onQueueChange);
+        this.listenTo(this.player, 'track:play', this.onPlay);
+        this.listenTo(this.player, 'track:stop', this.onStop);
+        this.listenTo(this.player, 'track:pause', this.onPause);
+        return this.listenTo(this.player, 'queue:add queue:pop', this.onQueueChange);
       }
     };
 
