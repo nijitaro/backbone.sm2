@@ -67,7 +67,8 @@ var __hasProp = {}.hasOwnProperty,
           url: _.isFunction(playable.url) ? playable.url : playable.url,
           onload: function() {
             _this.trigger('playStart', playable, _this.sound);
-            return _this.sound.play();
+            _this.sound.play();
+            return _this.preloadNext();
           }
         });
         this.sound.playable = playable;
@@ -75,6 +76,8 @@ var __hasProp = {}.hasOwnProperty,
       }
       return this.trigger('play', playable, this.sound);
     };
+
+    Player.prototype.preloadNext = function() {};
 
     Player.prototype.pause = function() {
       if (this.sound == null) {
@@ -126,6 +129,19 @@ var __hasProp = {}.hasOwnProperty,
       playable = _.isArray(this.queue[0]) ? (playlist = peek.length === 1 ? this.queue.shift(1) : this.queue[0], playlist.shift(1)) : this.queue.shift(1);
       this.trigger('queuePop', playable);
       return playable;
+    };
+
+    Player.prototype.getNext = function() {
+      var peek;
+      if (this.queue.length === 0) {
+        return;
+      }
+      peek = this.queue[0];
+      if (_.isArray(peek)) {
+        return peek[0];
+      } else {
+        return peek;
+      }
     };
 
     Player.prototype.isPlayable = function(playable) {

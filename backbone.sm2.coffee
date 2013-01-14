@@ -47,9 +47,13 @@
           onload: =>
             @trigger('playStart', playable, @sound)
             @sound.play()
+            @preloadNext()
         @sound.playable = playable
         @sound.load()
       @trigger('play', playable, @sound)
+
+    preloadNext: ->
+      # prepare sound object instead of descriptor
 
     pause: ->
       return unless @sound?
@@ -84,6 +88,12 @@
         @queue.shift(1)
       @trigger('queuePop', playable)
       playable
+
+    getNext: ->
+      return if @queue.length == 0
+      peek = @queue[0]
+      if _.isArray(peek) then peek[0] else peek
+
 
     isPlayable: (playable) ->
       playable? and playable.url and playable.id
