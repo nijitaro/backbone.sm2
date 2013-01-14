@@ -19,6 +19,7 @@ var __hasProp = {}.hasOwnProperty,
     function Player() {
       this.sound = void 0;
       this.queue = [];
+      this.current = -1;
     }
 
     Player.prototype.add = function(playable) {
@@ -68,7 +69,7 @@ var __hasProp = {}.hasOwnProperty,
           onload: function() {
             _this.trigger('track:playStart', playable, _this.sound);
             _this.sound.play();
-            return _this.preloadNext();
+            return _this.preloadNext(_this.sound);
           },
           onfinish: function() {
             _this.trigger('track:finish', playable, _this.sound);
@@ -82,7 +83,7 @@ var __hasProp = {}.hasOwnProperty,
       return this.sound;
     };
 
-    Player.prototype.preloadNext = function() {};
+    Player.prototype.preloadNext = function(sound) {};
 
     Player.prototype.pause = function() {
       if (this.sound == null) {
@@ -141,16 +142,29 @@ var __hasProp = {}.hasOwnProperty,
     };
 
     Player.prototype.getNext = function() {
-      var peek;
+      var next;
       if (this.queue.length === 0) {
         return;
       }
-      peek = this.queue[0];
-      if (_.isArray(peek)) {
-        return peek[0];
+      if (_.isArray(this.current)) {
+        next = this.queue[this.current[0]][this.current[1] + 1];
+        if (next) {
+          this.current[1]++;
+        } else {
+          next = this.queue[this.current[0] + 1];
+          this.current = this.current[0] + 1;
+        }
       } else {
-        return peek;
+        next = this.queue[++this.current];
       }
+      if (_.isArray(next)) {
+        next = next[0];
+        if (!_.isArray(this.current)) {
+          this.current = [this.current, 0];
+        }
+      }
+      this.trigger('queue:next', next);
+      return next;
     };
 
     Player.prototype.isPlayable = function(playable) {

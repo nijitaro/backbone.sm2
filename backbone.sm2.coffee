@@ -12,6 +12,7 @@
     constructor: ->
       @sound = undefined
       @queue = []
+      @current = -1
 
     add: (playable) ->
       @queue.push(playable)
@@ -47,7 +48,7 @@
           onload: =>
             @trigger('track:playStart', playable, @sound)
             @sound.play()
-            @preloadNext()
+            @preloadNext(@sound)
           onfinish: =>
             @trigger('track:finish', playable, @sound)
             @next()
@@ -56,7 +57,7 @@
       @trigger('track:play', playable, @sound)
       @sound
 
-    preloadNext: ->
+    preloadNext: (sound) ->
       # prepare sound object instead of descriptor
 
     pause: ->
@@ -97,9 +98,22 @@
 
     getNext: ->
       return if @queue.length == 0
-      peek = @queue[0]
-      if _.isArray(peek) then peek[0] else peek
+      if(_.isArray(@current))
+        next = @queue[@current[0]][@current[1] + 1]
+        if(next)
+          @current[1]++
+        else
+          next = @queue[@current[0] + 1]
+          @current = @current[0] + 1;
+      else
+        next = @queue[++@current]
 
+      if(_.isArray(next))
+        next = next[0];
+        if(!_.isArray(@current))
+          @current = [@current, 0]
+      @trigger('queue:next', next)
+      next
 
     isPlayable: (playable) ->
       playable? and playable.url and playable.id
