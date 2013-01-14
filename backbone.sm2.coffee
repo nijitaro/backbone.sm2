@@ -27,7 +27,7 @@
       @ref = ref
       prev
 
-    # compute prev playable in queue and prev ref but do not update them
+    # compute prev track in queue and prev ref but do not update them
     prevImpl: ->
       if _.isArray(@ref)
         ref = _.toArray(@ref)
@@ -47,7 +47,7 @@
 
       {ref, prev}
 
-    # compute next playable in queue and next ref but do not update them
+    # compute next track in queue and next ref but do not update them
     nextImpl: ->
       if _.isArray(@ref)
         ref = _.toArray(@ref)
@@ -80,48 +80,48 @@
       @queue = []
       @cur = new QueueCursor(@queue)
 
-    add: (playable) ->
-      @queue.push(playable)
-      @trigger('queue:add', playable)
+    add: (track) ->
+      @queue.push(track)
+      @trigger('queue:add', track)
 
-    isActive: (playable, playState = 0) ->
-      if playable
-        @sound?.playState == playState and @sound?.id == playable.id
+    isActive: (track, playState = 0) ->
+      if track
+        @sound?.playState == playState and @sound?.id == track.id
       else
         @sound?.playState == playState
 
-    isPlaying: (playable) ->
-      @isActive(playable, 1) and not @sound?.paused
+    isPlaying: (track) ->
+      @isActive(track, 1) and not @sound?.paused
 
-    isPaused: (playable) ->
-      @isActive(playable, 1) and @sound?.paused
+    isPaused: (track) ->
+      @isActive(track, 1) and @sound?.paused
 
     play: ->
       return if @isPlaying()
       if @sound?
         @sound.play()
-        @trigger('track:play', @sound.playable, @sound)
+        @trigger('track:play', @sound.track, @sound)
       else
-        playable = @cur.next()
+        track = @cur.next()
 
         # reached the end of the queue
-        if not playable
+        if not track
           this.trigger('queue:end')
           return
 
-        @sound = @initPlayable(playable)
+        @sound = @initPlayable(track)
         @initSound(@sound)
       @sound
 
     pause: ->
       return unless @sound?
       @sound.pause()
-      @trigger('track:pause', @sound.playable, @sound)
+      @trigger('track:pause', @sound.track, @sound)
 
     stop: (destruct = false) ->
       return unless @sound?
       @sound.stop()
-      @trigger('track:stop', @sound.playable, @sound)
+      @trigger('track:stop', @sound.track, @sound)
       if destruct
         @sound.destruct()
         @sound = undefined
@@ -134,41 +134,41 @@
         @initSound(@sound)
       else
         @play()
-      @trigger('queue:next', @sound.playable, @sound)
+      @trigger('queue:next', @sound.track, @sound)
       @sound
 
     prev: ->
       return unless @sound?
       @stop(true)
-      playable = @cur.prev()
+      track = @cur.prev()
 
       # reached the start of the queue
-      if not playable
+      if not track
         return
 
-      @sound = @initPlayable(playable)
+      @sound = @initPlayable(track)
       @initSound(@sound)
-      @trigger('queue:prev', @sound.playable, @sound)
+      @trigger('queue:prev', @sound.track, @sound)
       @sound
 
-    # init playable with a sound object
-    initPlayable: (playable) ->
+    # init track with a sound object
+    initPlayable: (track) ->
       sound = soundManager.createSound
         onload: =>
           @preloadNextFor(sound)
         onfinish: =>
-          @trigger('track:finish', @sound.playable, @sound)
+          @trigger('track:finish', @sound.track, @sound)
           @next()
-        id: playable.id
-        url: if _.isFunction(playable.url) then playable.url else playable.url
-      sound.playable = playable
+        id: track.id
+        url: if _.isFunction(track.url) then track.url else track.url
+      sound.track = track
       sound
 
     # start playing sound
     initSound: (sound) ->
       @sound = sound
       @nextSound = undefined
-      @trigger('track:play', @sound.playable, @sound)
+      @trigger('track:play', @sound.track, @sound)
       @sound.play()
 
     # set a callback on sound position to start preloading next track
@@ -177,8 +177,8 @@
         offset = sound.duration - @preloadThreshold
         sound.onPosition (offset), =>
           sound.clearOnPosition(offset)
-          playable = @cur.peek()
-          @nextSound = @initPlayable(playable)
+          track = @cur.peek()
+          @nextSound = @initPlayable(track)
           @nextSound.load()
 
   class PlayerView extends Backbone.View

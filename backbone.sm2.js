@@ -113,48 +113,48 @@ var __hasProp = {}.hasOwnProperty,
       this.cur = new QueueCursor(this.queue);
     }
 
-    Player.prototype.add = function(playable) {
-      this.queue.push(playable);
-      return this.trigger('queue:add', playable);
+    Player.prototype.add = function(track) {
+      this.queue.push(track);
+      return this.trigger('queue:add', track);
     };
 
-    Player.prototype.isActive = function(playable, playState) {
+    Player.prototype.isActive = function(track, playState) {
       var _ref, _ref1, _ref2;
       if (playState == null) {
         playState = 0;
       }
-      if (playable) {
-        return ((_ref = this.sound) != null ? _ref.playState : void 0) === playState && ((_ref1 = this.sound) != null ? _ref1.id : void 0) === playable.id;
+      if (track) {
+        return ((_ref = this.sound) != null ? _ref.playState : void 0) === playState && ((_ref1 = this.sound) != null ? _ref1.id : void 0) === track.id;
       } else {
         return ((_ref2 = this.sound) != null ? _ref2.playState : void 0) === playState;
       }
     };
 
-    Player.prototype.isPlaying = function(playable) {
+    Player.prototype.isPlaying = function(track) {
       var _ref;
-      return this.isActive(playable, 1) && !((_ref = this.sound) != null ? _ref.paused : void 0);
+      return this.isActive(track, 1) && !((_ref = this.sound) != null ? _ref.paused : void 0);
     };
 
-    Player.prototype.isPaused = function(playable) {
+    Player.prototype.isPaused = function(track) {
       var _ref;
-      return this.isActive(playable, 1) && ((_ref = this.sound) != null ? _ref.paused : void 0);
+      return this.isActive(track, 1) && ((_ref = this.sound) != null ? _ref.paused : void 0);
     };
 
     Player.prototype.play = function() {
-      var playable;
+      var track;
       if (this.isPlaying()) {
         return;
       }
       if (this.sound != null) {
         this.sound.play();
-        this.trigger('track:play', this.sound.playable, this.sound);
+        this.trigger('track:play', this.sound.track, this.sound);
       } else {
-        playable = this.cur.next();
-        if (!playable) {
+        track = this.cur.next();
+        if (!track) {
           this.trigger('queue:end');
           return;
         }
-        this.sound = this.initPlayable(playable);
+        this.sound = this.initPlayable(track);
         this.initSound(this.sound);
       }
       return this.sound;
@@ -165,7 +165,7 @@ var __hasProp = {}.hasOwnProperty,
         return;
       }
       this.sound.pause();
-      return this.trigger('track:pause', this.sound.playable, this.sound);
+      return this.trigger('track:pause', this.sound.track, this.sound);
     };
 
     Player.prototype.stop = function(destruct) {
@@ -176,7 +176,7 @@ var __hasProp = {}.hasOwnProperty,
         return;
       }
       this.sound.stop();
-      this.trigger('track:stop', this.sound.playable, this.sound);
+      this.trigger('track:stop', this.sound.track, this.sound);
       if (destruct) {
         this.sound.destruct();
         return this.sound = void 0;
@@ -194,27 +194,27 @@ var __hasProp = {}.hasOwnProperty,
       } else {
         this.play();
       }
-      this.trigger('queue:next', this.sound.playable, this.sound);
+      this.trigger('queue:next', this.sound.track, this.sound);
       return this.sound;
     };
 
     Player.prototype.prev = function() {
-      var playable;
+      var track;
       if (this.sound == null) {
         return;
       }
       this.stop(true);
-      playable = this.cur.prev();
-      if (!playable) {
+      track = this.cur.prev();
+      if (!track) {
         return;
       }
-      this.sound = this.initPlayable(playable);
+      this.sound = this.initPlayable(track);
       this.initSound(this.sound);
-      this.trigger('queue:prev', this.sound.playable, this.sound);
+      this.trigger('queue:prev', this.sound.track, this.sound);
       return this.sound;
     };
 
-    Player.prototype.initPlayable = function(playable) {
+    Player.prototype.initPlayable = function(track) {
       var sound,
         _this = this;
       sound = soundManager.createSound({
@@ -222,20 +222,20 @@ var __hasProp = {}.hasOwnProperty,
           return _this.preloadNextFor(sound);
         },
         onfinish: function() {
-          _this.trigger('track:finish', _this.sound.playable, _this.sound);
+          _this.trigger('track:finish', _this.sound.track, _this.sound);
           return _this.next();
         },
-        id: playable.id,
-        url: _.isFunction(playable.url) ? playable.url : playable.url
+        id: track.id,
+        url: _.isFunction(track.url) ? track.url : track.url
       });
-      sound.playable = playable;
+      sound.track = track;
       return sound;
     };
 
     Player.prototype.initSound = function(sound) {
       this.sound = sound;
       this.nextSound = void 0;
-      this.trigger('track:play', this.sound.playable, this.sound);
+      this.trigger('track:play', this.sound.track, this.sound);
       return this.sound.play();
     };
 
@@ -245,10 +245,10 @@ var __hasProp = {}.hasOwnProperty,
       if (this.allowPreload != null) {
         offset = sound.duration - this.preloadThreshold;
         return sound.onPosition(offset, function() {
-          var playable;
+          var track;
           sound.clearOnPosition(offset);
-          playable = _this.cur.peek();
-          _this.nextSound = _this.initPlayable(playable);
+          track = _this.cur.peek();
+          _this.nextSound = _this.initPlayable(track);
           return _this.nextSound.load();
         });
       }
