@@ -58,7 +58,7 @@ var __hasProp = {}.hasOwnProperty,
       if (this.sound != null) {
         this.sound.play();
       } else {
-        playable = this.pop();
+        playable = this.getNext();
         if (!playable) {
           this.trigger('queue:end');
           return;

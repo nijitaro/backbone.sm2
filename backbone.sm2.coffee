@@ -35,7 +35,7 @@
       if @sound?
         @sound.play()
       else
-        playable = @pop()
+        playable = @getNext()
 
         # reached the end of the queue
         if not playable
