@@ -5,7 +5,9 @@
 <script src="soundmanager2.js"></script>
 <script src="backbone.sm2.js"></script>
 <div id="player">
-  <a class="button" href>play</a>
+  <a class="play" href>play</a>
+  <a class="next" href>next</a>
+  <p class="current"></p>
   <ul class="queue"></ul>
 </div>
 <script>
@@ -13,29 +15,49 @@
     el: $('#player'),
 
     events: {
-      "click .button": function(e) {
+      "click .play": function(e) {
         e.preventDefault();
         if (this.player.isPlaying()) {
           this.player.pause();
         } else {
           this.player.play();
         }
+      },
+      "click .next": function(e) {
+        e.preventDefault();
+        this.player.next();
       }
     },
 
     onPlay: function(sound) { this.$(".button").text('pause'); },
     onStop: function(sound) { this.$(".button").text('play'); },
     onPause: function(sound) { this.$(".button").text('play'); },
+
     onQueueChange: function(playable) {
-      this.player.queue.forEach(function(item) {
-        console.log(item);
-      });
+      var $queue = this.$('.queue');
+      $queue.html('');
+
+      var renderQueue = function($queue, queue) {
+        queue.forEach(function(item) {
+          if (_.isArray(item)) {
+            $newQueue = $('<ul></ul>');
+            $queue.append($newQueue);
+            renderQueue($newQueue, item);
+          } else {
+            $queue.append($('<li>' + item.id + ': ' + item.url + '</li>'));
+          }
+        }, this);
+      };
+      renderQueue = renderQueue.bind(this);
+      renderQueue($queue, this.player.queue);
     }
   });
 
   function ready() {
     var view = new PlayerView()
     view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: '1'});
+    view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: '2'});
+    view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: '3'});
     view.render()
   }
 

@@ -58,6 +58,10 @@ var __hasProp = {}.hasOwnProperty,
         this.sound.play();
       } else {
         playable = this.pop();
+        if (!playable) {
+          this.trigger('queueEnd');
+          return;
+        }
         this.sound = soundManager.createSound({
           id: playable.id,
           url: _.isFunction(playable.url) ? playable.url : playable.url,
@@ -79,12 +83,26 @@ var __hasProp = {}.hasOwnProperty,
       return this.trigger('pause', this.sound);
     };
 
-    Player.prototype.stop = function() {
+    Player.prototype.stop = function(destruct) {
+      if (destruct == null) {
+        destruct = false;
+      }
       if (this.sound == null) {
         return;
       }
       this.sound.stop();
-      return this.trigger('stop', this.sound);
+      this.trigger('stop', this.sound);
+      if (destruct) {
+        this.sound.destruct();
+        return this.sound = void 0;
+      }
+    };
+
+    Player.prototype.next = function() {
+      if (this.sound != null) {
+        this.stop(true);
+      }
+      return this.play();
     };
 
     Player.prototype.setPosition = function(position, relative) {
@@ -134,10 +152,12 @@ var __hasProp = {}.hasOwnProperty,
 
     PlayerView.prototype.initialize = function(options) {
       this.player = (options != null ? options.player : void 0) || new Player();
-      this.listenTo(this.player, 'play', this.onPlay);
-      this.listenTo(this.player, 'stop', this.onStop);
-      this.listenTo(this.player, 'pause', this.onPause);
-      return this.listenTo(this.player, 'queue queuePop', this.onQueueChange);
+      if (!(options != null ? options.disablePlayerEvents : void 0)) {
+        this.listenTo(this.player, 'play', this.onPlay);
+        this.listenTo(this.player, 'stop', this.onStop);
+        this.listenTo(this.player, 'pause', this.onPause);
+        return this.listenTo(this.player, 'queueAdd queuePop', this.onQueueChange);
+      }
     };
 
     PlayerView.prototype.onPlay = function() {};

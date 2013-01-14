@@ -35,6 +35,9 @@
         @sound.play()
       else
         playable = @pop()
+        if not playable
+          this.trigger('queueEnd')
+          return
         @sound = soundManager.createSound
           id: playable.id
           url: if _.isFunction(playable.url) then playable.url else playable.url
@@ -49,10 +52,17 @@
       @sound.pause()
       @trigger('pause', @sound)
 
-    stop: ->
+    stop: (destruct = false) ->
       return unless @sound?
       @sound.stop()
       @trigger('stop', @sound)
+      if destruct
+        @sound.destruct()
+        @sound = undefined
+
+    next: ->
+      @stop(true) if @sound?
+      @play()
 
     setPosition: (position, relative = false) ->
       return unless @sound?
@@ -82,10 +92,11 @@
 
     initialize: (options) ->
       @player = options?.player or new Player()
-      @listenTo @player, 'play', @onPlay
-      @listenTo @player, 'stop', @onStop
-      @listenTo @player, 'pause', @onPause
-      @listenTo @player, 'queue queuePop', @onQueueChange
+      unless options?.disablePlayerEvents
+        @listenTo @player, 'play', @onPlay
+        @listenTo @player, 'stop', @onStop
+        @listenTo @player, 'pause', @onPause
+        @listenTo @player, 'queueAdd queuePop', @onQueueChange
 
     onPlay: ->
     onStop: ->
