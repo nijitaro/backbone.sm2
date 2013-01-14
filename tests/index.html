@@ -3,9 +3,20 @@
 <script src="underscore.js"></script>
 <script src="backbone.js"></script>
 <script src="soundmanager2.js"></script>
-<script src="../backbone.sm2.js"></script>
+<script src="backbone.sm2.js"></script>
+<div id="player">
+</div>
 <script>
-  soundManager.setup({
-    url: "swf"
+  var PlayerView = Backbone.SM2.PlayerView.extend({
+    el: $('#player'),
   });
+
+  function ready() {
+    var view = new PlayerView()
+    view.player.queue({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 1});
+    view.player.play();
+    view.render()
+  }
+
+  soundManager.setup({url: "swf", onready: ready});
 </script>

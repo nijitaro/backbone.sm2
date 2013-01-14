@@ -15,6 +15,7 @@
 
     queue: (playable) ->
       @_queue.push(playable)
+      this.trigger('queue', playable)
 
     isActive: (playable, playState = 0) ->
       if playable
@@ -27,16 +28,26 @@
 
     play: ->
       return if @isPlaying()
-      if not @_sound?
-        {url, id}
+      if @_sound?
+        @_sound.play()
+      else
+        playable = @getNextPlayable()
+        @_sound = soundManager.createSound
+          id: playable.id
+          url: if _.isFunction(playable.url) then playable.url else playable.url
+          onload: => @_sound.play()
+        @_sound.load()
+      this.trigger('play', @_sound)
 
     pause: ->
       return unless @_sound?
       @_sound.pause()
+      this.trigger('pause', @_sound)
 
     stop: ->
       return unless @_sound?
       @_sound.stop()
+      this.trigger('stop', @_sound)
 
     setPosition: (position, relative = false) ->
       return unless @_sound?
@@ -53,15 +64,16 @@
       else
         @_queue.shift(1)
 
-    getPlayable: (playable) ->
-      url = if _.isFunction(playable.url) then playable.url else playable.url
-      throw new Error("undefined url for #{playable}") unless url?
-      url
-
     isPlayable: (playable) ->
       playable? and playable.url and playable.id
 
     ensureSM2: ->
       throw new Events("SoundManager2 isn't ready") unless soundManager.ok()
 
-  {Player}
+  class PlayerView extends Backbone.View
+    className: 'app'
+
+    initialize: (options) ->
+      this.player = options?.player or new Player()
+
+  {Player, PlayerView}

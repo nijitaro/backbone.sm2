@@ -5,11 +5,17 @@ all: build
 
 build: $(LIB)
 
-test:
-	open -a 'Google Chrome.app' tests/index.html
+watch:
+	watch -n1 $(MAKE)
 
 clean:
 	rm -f *.js
+
+test-server:
+	@(cd tests; python -m SimpleHTTPServer)
+
+test:
+	$(MAKE) -j2 test-server watch
 
 %.js: %.coffee
 	coffee -bcp $< > $@
