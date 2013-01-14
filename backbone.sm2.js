@@ -102,8 +102,13 @@ var __hasProp = {}.hasOwnProperty,
 
     _.extend(Player.prototype, Backbone.Events);
 
-    function Player() {
+    Player.prototype.preloadThreshold = 5000;
+
+    function Player(options) {
+      this.allowPreload = options != null ? options.allowPreload : void 0;
+      this.preloadThreshold = (options != null ? options.preloadThreshold : void 0) || this.preloadThreshold;
       this.sound = void 0;
+      this.nextSound = void 0;
       this.queue = [];
       this.cur = new QueueCursor(this.queue);
     }
@@ -142,19 +147,18 @@ var __hasProp = {}.hasOwnProperty,
       }
       if (this.sound != null) {
         this.sound.play();
-        this.trigger('track:play', playable, this.sound);
+        this.trigger('track:play', this.sound.playable, this.sound);
       } else {
         playable = this.cur.next();
         if (!playable) {
           this.trigger('queue:end');
           return;
         }
-        this.setPlayable(playable);
+        this.sound = this.initPlayable(playable);
+        this.initSound(this.sound);
       }
       return this.sound;
     };
-
-    Player.prototype.preloadNext = function(sound) {};
 
     Player.prototype.pause = function() {
       if (this.sound == null) {
@@ -184,7 +188,12 @@ var __hasProp = {}.hasOwnProperty,
         return;
       }
       this.stop(true);
-      this.play();
+      if (this.nextSound != null) {
+        this.sound = this.nextSound;
+        this.initSound(this.sound);
+      } else {
+        this.play();
+      }
       this.trigger('queue:next', this.sound.playable, this.sound);
       return this.sound;
     };
@@ -199,29 +208,50 @@ var __hasProp = {}.hasOwnProperty,
       if (!playable) {
         return;
       }
-      this.setPlayable(playable);
+      this.sound = this.initPlayable(playable);
+      this.initSound(this.sound);
       this.trigger('queue:prev', this.sound.playable, this.sound);
       return this.sound;
     };
 
-    Player.prototype.setPlayable = function(playable) {
-      var _this = this;
-      this.sound = soundManager.createSound({
-        id: playable.id,
-        url: _.isFunction(playable.url) ? playable.url : playable.url,
+    Player.prototype.initPlayable = function(playable) {
+      var sound,
+        _this = this;
+      sound = soundManager.createSound({
         onload: function() {
-          _this.trigger('track:playStart', playable, _this.sound);
-          _this.sound.play();
-          return _this.preloadNext(_this.sound);
+          return _this.preloadNextFor(sound);
         },
         onfinish: function() {
-          _this.trigger('track:finish', playable, _this.sound);
+          _this.trigger('track:finish', _this.sound.playable, _this.sound);
           return _this.next();
-        }
+        },
+        id: playable.id,
+        url: _.isFunction(playable.url) ? playable.url : playable.url
       });
-      this.sound.playable = playable;
-      this.trigger('track:play', playable, this.sound);
-      return this.sound.load();
+      sound.playable = playable;
+      return sound;
+    };
+
+    Player.prototype.initSound = function(sound) {
+      this.sound = sound;
+      this.nextSound = void 0;
+      this.trigger('track:play', this.sound.playable, this.sound);
+      return this.sound.play();
+    };
+
+    Player.prototype.preloadNextFor = function(sound) {
+      var offset,
+        _this = this;
+      if (this.allowPreload != null) {
+        offset = sound.duration - this.preloadThreshold;
+        return sound.onPosition(offset, function() {
+          var playable;
+          sound.clearOnPosition(offset);
+          playable = _this.cur.peek();
+          _this.nextSound = _this.initPlayable(playable);
+          return _this.nextSound.load();
+        });
+      }
     };
 
     return Player;
