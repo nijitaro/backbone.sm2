@@ -11,7 +11,44 @@ var __hasProp = {}.hasOwnProperty,
     return root.Backbone.SM2 = factory(root.Backbone, root._);
   }
 })(this, function(Backbone, _) {
-  var Player, PlayerView, QueueCursor;
+  /**
+   * Track model
+  */
+
+  var Player, PlayerView, QueueCursor, Track, Tracks;
+  Track = (function(_super) {
+
+    __extends(Track, _super);
+
+    function Track() {
+      return Track.__super__.constructor.apply(this, arguments);
+    }
+
+    return Track;
+
+  })(Backbone.Model);
+  /**
+   * Tracks collection
+  */
+
+  Tracks = (function(_super) {
+
+    __extends(Tracks, _super);
+
+    function Tracks() {
+      return Tracks.__super__.constructor.apply(this, arguments);
+    }
+
+    Tracks.prototype.model = Track;
+
+    return Tracks;
+
+  })(Backbone.Collection);
+  /**
+   * Playlist iterator('cursor') pointed at currently played track and returning
+   * previous and next tracks in the queue
+  */
+
   QueueCursor = (function() {
 
     function QueueCursor(queue) {
@@ -21,9 +58,9 @@ var __hasProp = {}.hasOwnProperty,
 
     QueueCursor.prototype.cur = function() {
       if (_.isArray(this.ref)) {
-        return this.queue[this.ref[0]][this.ref[1]];
+        return this.queue.at(this.ref[0]).at(this.ref[1]);
       } else {
-        return this.queue[this.ref];
+        return this.queue.at(this.ref);
       }
     };
 
@@ -49,20 +86,20 @@ var __hasProp = {}.hasOwnProperty,
       var prev, ref;
       if (_.isArray(this.ref)) {
         ref = _.toArray(this.ref);
-        prev = this.queue[ref[0]][ref[1] - 1];
+        prev = this.queue.at(ref[0]).get('tracks').at(ref[1] - 1);
         if (prev) {
           ref[1] = ref[1] - 1;
         } else {
-          prev = this.queue[ref[0] - 1];
+          prev = this.queue.at(ref[0] - 1);
           ref = ref[0] - 1;
         }
       } else {
         ref = this.ref - 1;
-        prev = this.queue[ref];
+        prev = this.queue.at(ref);
       }
-      if (_.isArray(prev)) {
+      if (prev.get('tracks')) {
         ref = [ref, prev.length - 1];
-        prev = prev[prev.length - 1];
+        prev = prev.get('tracks').at(prev.length - 1);
       }
       return {
         ref: ref,
@@ -74,20 +111,20 @@ var __hasProp = {}.hasOwnProperty,
       var next, ref;
       if (_.isArray(this.ref)) {
         ref = _.toArray(this.ref);
-        next = this.queue[ref[0]][ref[1] + 1];
+        next = this.queue.at(ref[0]).get('tracks').at(ref[1] + 1);
         if (next) {
           ref[1] = ref[1] + 1;
         } else {
-          next = this.queue[ref[0] + 1];
+          next = this.queue.at(ref[0] + 1);
           ref = ref[0] + 1;
         }
       } else {
         ref = this.ref + 1;
-        next = this.queue[ref];
+        next = this.queue.at(ref);
       }
-      if (_.isArray(next)) {
+      if (next.get('tracks')) {
         ref = [ref, 0];
-        next = next[0];
+        next = next.get('tracks').at(0);
       }
       return {
         ref: ref,
@@ -98,6 +135,10 @@ var __hasProp = {}.hasOwnProperty,
     return QueueCursor;
 
   })();
+  /**
+   * Player class
+  */
+
   Player = (function() {
 
     _.extend(Player.prototype, Backbone.Events);
@@ -109,12 +150,15 @@ var __hasProp = {}.hasOwnProperty,
       this.preloadThreshold = (options != null ? options.preloadThreshold : void 0) || this.preloadThreshold;
       this.sound = void 0;
       this.nextSound = void 0;
-      this.queue = [];
+      this.queue = new Tracks();
       this.cur = new QueueCursor(this.queue);
     }
 
     Player.prototype.add = function(track) {
-      this.queue.push(track);
+      track = _.isArray(track) ? new Track({
+        tracks: new Tracks(track)
+      }) : new Track(track);
+      this.queue.add(track);
       return this.trigger('queue:add', track);
     };
 
@@ -225,8 +269,8 @@ var __hasProp = {}.hasOwnProperty,
           _this.trigger('track:finish', _this.sound.track, _this.sound);
           return _this.next();
         },
-        id: track.id,
-        url: _.isFunction(track.url) ? track.url : track.url
+        id: track.get('id'),
+        url: _.isFunction(track.get('url')) ? track.get('url')() : track.get('url')
       });
       sound.track = track;
       return sound;
@@ -257,6 +301,10 @@ var __hasProp = {}.hasOwnProperty,
     return Player;
 
   })();
+  /**
+   * Player app
+  */
+
   PlayerView = (function(_super) {
 
     __extends(PlayerView, _super);

@@ -6,13 +6,29 @@
     root.Backbone.SM2 = factory(root.Backbone, root._)
 ) this, (Backbone, _) ->
 
+  ###*
+   * Track model
+  ###
+  class Track extends Backbone.Model
+
+  ###*
+   * Tracks collection
+  ###
+  class Tracks extends Backbone.Collection
+
+    model: Track
+
+  ###*
+   * Playlist iterator('cursor') pointed at currently played track and returning
+   * previous and next tracks in the queue
+   ###
   class QueueCursor
     constructor: (queue) ->
       @queue = queue
       @ref = -1
 
     cur: ->
-      if _.isArray(@ref) then @queue[@ref[0]][@ref[1]] else @queue[@ref]
+      if _.isArray(@ref) then @queue.at(@ref[0]).at(@ref[1]) else @queue.at(@ref)
 
     peek: ->
       @nextImpl().next
@@ -31,19 +47,19 @@
     prevImpl: ->
       if _.isArray(@ref)
         ref = _.toArray(@ref)
-        prev = @queue[ref[0]][ref[1] - 1]
+        prev = @queue.at(ref[0]).get('tracks').at(ref[1] - 1)
         if prev
           ref[1] = ref[1] - 1
         else
-          prev = @queue[ref[0] - 1]
+          prev = @queue.at(ref[0] - 1)
           ref = ref[0] - 1
       else
         ref = @ref - 1
-        prev = @queue[ref]
+        prev = @queue.at(ref)
 
-      if _.isArray(prev)
+      if prev.get('tracks')
         ref = [ref, prev.length - 1]
-        prev = prev[prev.length - 1]
+        prev = prev.get('tracks').at(prev.length - 1)
 
       {ref, prev}
 
@@ -51,22 +67,25 @@
     nextImpl: ->
       if _.isArray(@ref)
         ref = _.toArray(@ref)
-        next = @queue[ref[0]][ref[1] + 1]
+        next = @queue.at(ref[0]).get('tracks').at(ref[1] + 1)
         if next
           ref[1] = ref[1] + 1
         else
-          next = @queue[ref[0] + 1]
+          next = @queue.at(ref[0] + 1)
           ref = ref[0] + 1
       else
         ref = @ref + 1
-        next = @queue[ref]
+        next = @queue.at(ref)
 
-      if _.isArray(next)
+      if next.get('tracks')
         ref = [ref, 0]
-        next = next[0]
+        next = next.get('tracks').at(0)
 
       {ref, next}
 
+  ###*
+   * Player class
+  ###
   class Player
     _.extend this.prototype, Backbone.Events
 
@@ -77,11 +96,15 @@
       @preloadThreshold = options?.preloadThreshold or @preloadThreshold
       @sound = undefined
       @nextSound = undefined
-      @queue = []
+      @queue = new Tracks()
       @cur = new QueueCursor(@queue)
 
     add: (track) ->
-      @queue.push(track)
+      track = if(_.isArray(track))
+        new Track({tracks: new Tracks(track)})
+      else
+        new Track(track)
+      @queue.add(track)
       @trigger('queue:add', track)
 
     isActive: (track, playState = 0) ->
@@ -159,8 +182,8 @@
         onfinish: =>
           @trigger('track:finish', @sound.track, @sound)
           @next()
-        id: track.id
-        url: if _.isFunction(track.url) then track.url else track.url
+        id: track.get('id')
+        url: if _.isFunction(track.get('url')) then track.get('url')() else track.get('url')
       sound.track = track
       sound
 
@@ -181,6 +204,9 @@
           @nextSound = @initPlayable(track)
           @nextSound.load()
 
+  ###*
+   * Player app
+  ###
   class PlayerView extends Backbone.View
     className: 'app'
 

@@ -5,7 +5,6 @@
 <script src="soundmanager2.js"></script>
 <script src="backbone.sm2.js"></script>
 <div id="player">
-  <a class="prev" href>prev</a>
   <a class="play" href>play</a>
   <a class="next" href>next</a>
   <p class="current"></p>
@@ -27,10 +26,6 @@
       "click .next": function(e) {
         e.preventDefault();
         this.player.next();
-      },
-      "click .prev": function(e) {
-        e.preventDefault();
-        this.player.prev();
       }
     },
 
@@ -43,13 +38,14 @@
       $queue.html('');
 
       var renderQueue = function($queue, queue) {
+        //console.log('QUEUE', queue)
         queue.forEach(function(item) {
-          if (_.isArray(item)) {
+          if (item.get('tracks')) {
             $newQueue = $('<ul></ul>');
             $queue.append($newQueue);
-            renderQueue($newQueue, item);
+            renderQueue($newQueue, item.get('tracks'));
           } else {
-            $queue.append($('<li>' + item.id + ': ' + item.url + '</li>'));
+            $queue.append($('<li>' + item.get('id') + ': ' + item.get('url') + '</li>'));
           }
         }, this);
       };
@@ -59,9 +55,7 @@
   });
 
   function ready() {
-    var view = window.playerView = new PlayerView({
-      player: new Backbone.SM2.Player({allowPreload: true, preloadThreshold: 155000})
-    });
+    var view = window.playerView = new PlayerView()
     view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's1'});
     view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's2'});
     view.player.add(
@@ -70,12 +64,12 @@
         {url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's4'}
     ]);
     view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's5'});
-    view.player.on('all', function(ev, track) {
+    view.player.on('all', function() {
       var args = _.toArray(arguments);
-      console.log('player event: ' + ev + ' track: ' + track.id);
+      console.log('player event: ' + args);
     });
     view.render()
   }
 
-  soundManager.setup({url: "swf", onready: ready, debugMode: false});
+  soundManager.setup({url: "swf", onready: ready});
 </script>
