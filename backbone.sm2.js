@@ -11,7 +11,7 @@ var __hasProp = {}.hasOwnProperty,
     return root.Backbone.SM2 = factory(root.Backbone, root._);
   }
 })(this, function(Backbone, _) {
-  var Player, PlayerView, QueueCursor;
+  var Player, PlayerView, ProgressBar, QueueCursor;
   QueueCursor = (function() {
 
     function QueueCursor(queue) {
@@ -225,6 +225,12 @@ var __hasProp = {}.hasOwnProperty,
           _this.trigger('track:finish', _this.sound.track, _this.sound);
           return _this.next();
         },
+        whileplaying: function() {
+          return _this.trigger('track:whileplaying', track, sound);
+        },
+        whileloading: function() {
+          return _this.trigger('track:whileloading', track, sound);
+        },
         id: track.id,
         url: _.isFunction(track.url) ? track.url : track.url
       });
@@ -290,8 +296,83 @@ var __hasProp = {}.hasOwnProperty,
     return PlayerView;
 
   })(Backbone.View);
+  ProgressBar = (function(_super) {
+
+    __extends(ProgressBar, _super);
+
+    function ProgressBar() {
+      return ProgressBar.__super__.constructor.apply(this, arguments);
+    }
+
+    ProgressBar.prototype.className = 'view-progress-bar';
+
+    ProgressBar.prototype.events = {
+      'click': 'onClick'
+    };
+
+    ProgressBar.prototype.initialize = function(options) {
+      this.$progressBar = void 0;
+      this.$bufferingBar = void 0;
+      this.trackId = void 0;
+      this.player = options.player;
+      return this.listenTo(this.player, {
+        'track:play': this.onPlay,
+        'track:stop': this.onStop,
+        'track:whileplaying': this.whilePlaying,
+        'track:whileloading': this.whileLoading
+      });
+    };
+
+    ProgressBar.prototype.render = function() {
+      this.$el.html("<div class=\"buffering-bar\"></div>\n<div class=\"progress-bar\"></div>");
+      return this.updateElements();
+    };
+
+    ProgressBar.prototype.updateElements = function() {
+      this.$progressBar = this.$('.progress-bar');
+      return this.$bufferingBar = this.$('.buffering-bar');
+    };
+
+    ProgressBar.prototype.onClick = function(e) {
+      var pos;
+      if (!((this.trackId != null) && (this.player.sound != null))) {
+        return;
+      }
+      pos = (e.offsetX / this.$el.width()) * this.player.sound.duration;
+      return this.player.sound.setPosition(pos);
+    };
+
+    ProgressBar.prototype.onPlay = function(track) {
+      return this.trackId = track.id;
+    };
+
+    ProgressBar.prototype.onStop = function() {
+      this.trackId = void 0;
+      return this.$progressBar.width(0);
+    };
+
+    ProgressBar.prototype.whilePlaying = function(track, sound) {
+      var w;
+      if (track.id === this.trackId) {
+        w = (sound.position / sound.duration) * this.$el.width();
+        return this.$progressBar.width(w);
+      }
+    };
+
+    ProgressBar.prototype.whileLoading = function(track, sound) {
+      var w;
+      if (track.id === this.trackId) {
+        w = (sound.bytesLoaded / sound.bytesTotal) * this.$el.width();
+        return this.$bufferingBar.width(w);
+      }
+    };
+
+    return ProgressBar;
+
+  })(Backbone.View);
   return {
     Player: Player,
-    PlayerView: PlayerView
+    PlayerView: PlayerView,
+    ProgressBar: ProgressBar
   };
 });

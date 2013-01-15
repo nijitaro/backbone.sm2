@@ -159,6 +159,10 @@
         onfinish: =>
           @trigger('track:finish', @sound.track, @sound)
           @next()
+        whileplaying: =>
+          @trigger 'track:whileplaying', track, sound
+        whileloading: =>
+          @trigger 'track:whileloading', track, sound
         id: track.id
         url: if _.isFunction(track.url) then track.url else track.url
       sound.track = track
@@ -198,4 +202,56 @@
     onPause: ->
     onQueueChange: ->
 
-  {Player, PlayerView}
+  class ProgressBar extends Backbone.View
+    className: 'view-progress-bar'
+
+    events:
+      'click': 'onClick'
+
+    initialize: (options) ->
+      @$progressBar = undefined
+      @$bufferingBar = undefined
+
+      # current track id
+      @trackId = undefined
+      @player = options.player
+      @listenTo @player,
+        'track:play': @onPlay
+        'track:stop': @onStop
+        'track:whileplaying': @whilePlaying
+        'track:whileloading': @whileLoading
+
+    render: ->
+      @$el.html """
+        <div class="buffering-bar"></div>
+        <div class="progress-bar"></div>
+        """
+      @updateElements()
+
+    updateElements: ->
+      @$progressBar = @$('.progress-bar')
+      @$bufferingBar = @$('.buffering-bar')
+
+    onClick: (e) ->
+      return unless @trackId? and @player.sound?
+      pos = (e.offsetX / @$el.width()) * @player.sound.duration
+      @player.sound.setPosition(pos)
+
+    onPlay: (track) ->
+      @trackId = track.id
+
+    onStop: ->
+      @trackId = undefined
+      @$progressBar.width(0)
+
+    whilePlaying: (track, sound) ->
+      if track.id == @trackId
+        w = (sound.position / sound.duration) * @$el.width()
+        @$progressBar.width(w)
+
+    whileLoading: (track, sound) ->
+      if track.id == @trackId
+        w = (sound.bytesLoaded / sound.bytesTotal) * @$el.width()
+        @$bufferingBar.width(w)
+
+  {Player, PlayerView, ProgressBar}
