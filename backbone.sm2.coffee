@@ -190,17 +190,10 @@
 
     initialize: (options) ->
       @player = options?.player or new Player()
-      unless options?.disablePlayerEvents
-        @listenTo @player,
-          'track:play': @onPlay
-          'track:stop': @onStop
-          'track:pause': @onPause
-          'queue:add queue:pop': @onQueueChange
-
-    onPlay: ->
-    onStop: ->
-    onPause: ->
-    onQueueChange: ->
+      @listenTo(@player, 'track:play', @onPlay) if @onPlay
+      @listenTo(@player, 'track:stop', @onStop) if @onStop
+      @listenTo(@player, 'track:pause', @onPause) if @onPause
+      @listenTo(@player, 'queue:add', @onQueueAdd) if @onQueueAdd
 
   class ProgressBar extends Backbone.View
     className: 'view-progress-bar'

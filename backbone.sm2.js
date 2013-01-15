@@ -275,23 +275,19 @@ var __hasProp = {}.hasOwnProperty,
 
     PlayerView.prototype.initialize = function(options) {
       this.player = (options != null ? options.player : void 0) || new Player();
-      if (!(options != null ? options.disablePlayerEvents : void 0)) {
-        return this.listenTo(this.player, {
-          'track:play': this.onPlay,
-          'track:stop': this.onStop,
-          'track:pause': this.onPause,
-          'queue:add queue:pop': this.onQueueChange
-        });
+      if (this.onPlay) {
+        this.listenTo(this.player, 'track:play', this.onPlay);
+      }
+      if (this.onStop) {
+        this.listenTo(this.player, 'track:stop', this.onStop);
+      }
+      if (this.onPause) {
+        this.listenTo(this.player, 'track:pause', this.onPause);
+      }
+      if (this.onQueueAdd) {
+        return this.listenTo(this.player, 'queue:add', this.onQueueAdd);
       }
     };
-
-    PlayerView.prototype.onPlay = function() {};
-
-    PlayerView.prototype.onStop = function() {};
-
-    PlayerView.prototype.onPause = function() {};
-
-    PlayerView.prototype.onQueueChange = function() {};
 
     return PlayerView;
 
