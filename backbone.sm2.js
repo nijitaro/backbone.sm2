@@ -354,9 +354,14 @@ var __hasProp = {}.hasOwnProperty,
           $queue.append($newQueue);
           return _this.renderQueue($newQueue, item.get('tracks'));
         } else {
-          return $queue.append($("<li id=\"track-" + (item.get('id')) + "\">" + (item.get('id')) + "\| " + (item.get('url')) + "</li>"));
+          return $queue.append($("<li id=\"track-" + (item.get('id')) + "\" class=\"track\">\n  " + (item.get('id')) + " | " + (item.get('url')) + "\n</li>"));
         }
       });
+    };
+
+    PlayerView.prototype.onPlay = function(track) {
+      this.$('.track').removeClass('current');
+      return this.$('#track-' + track.get('id')).addClass('current');
     };
 
     return PlayerView;

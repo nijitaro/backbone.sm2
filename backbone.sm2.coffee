@@ -232,11 +232,17 @@
         if (item.get('tracks'))
           $newQueue = $('<ul></ul>');
           $queue.append($newQueue);
-          this.renderQueue($newQueue, item.get('tracks'));
+          @renderQueue($newQueue, item.get('tracks'));
         else
           $queue.append $ """
-          <li id="track-#{ item.get('id') }">#{ item.get('id') }\| #{ item.get('url') }</li>
+          <li id="track-#{ item.get('id') }" class="track">
+            #{ item.get('id') } | #{ item.get('url') }
+          </li>
           """
+
+    onPlay: (track) ->
+      @$('.track').removeClass('current')
+      @$('#track-' + track.get('id')).addClass('current')
 
   ###*
    * Progress bar

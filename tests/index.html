@@ -47,6 +47,9 @@
     border-bottom: 1px solid #ddd;
     border-top: 1px solid #fff;
   }
+  .queue li.current {
+    background: #ddd;
+  }
   .queue > li:first-child {
     border-top: 0;
   }
@@ -74,7 +77,10 @@
       }
     },
 
-    onPlay: function(sound) { this.$(".play").text('pause'); },
+    onPlay: function(sound) {
+      Backbone.SM2.PlayerView.prototype.onPlay.call(this, sound);
+      this.$(".play").text('pause');
+    },
     onStop: function(sound) { this.$(".play").text('play'); },
     onPause: function(sound) { this.$(".play").text('play'); }
 
