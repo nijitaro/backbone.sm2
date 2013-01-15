@@ -9,7 +9,29 @@
   <a class="next" href>next</a>
   <p class="current"></p>
   <ul class="queue"></ul>
+  <div class="view-progress-bar" id="progressbar"></div>
 </div>
+<style>
+  .view-progress-bar {
+    height: 10px;
+    width: 500px;
+    background: #EEE;
+    position: relative;
+  }
+  .view-progress-bar .buffering-bar {
+    height: 10px;
+    width: 0;
+    background: #AAA;
+    position: relative;
+  }
+  .view-progress-bar .progress-bar {
+    height: 10px;
+    width: 0;
+    background: #444;
+    position: relative;
+    top: -10px;
+  }
+</style>
 <script>
   var PlayerView = Backbone.SM2.PlayerView.extend({
     el: $('#player'),
@@ -33,7 +55,7 @@
     onStop: function(sound) { this.$(".play").text('play'); },
     onPause: function(sound) { this.$(".play").text('play'); },
 
-    onQueueChange: function(playable) {
+    onQueueAdd: function(playable) {
       var $queue = this.$('.queue');
       $queue.html('');
 
@@ -55,18 +77,25 @@
   });
 
   function ready() {
-    var view = window.playerView = new PlayerView()
-    view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's1'});
-    view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's2'});
-    view.player.add(
+    var player = new Backbone.SM2.Player({allowPreload: true, preloadThreshold:
+      155000});
+    var view = window.playerView = new PlayerView({player: player});
+    var progressBar = new Backbone.SM2.ProgressBar({
+      el: $('#progressbar'),
+      player: player
+    });
+    progressBar.render()
+    player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's1'});
+    player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's2'});
+    player.add(
       [
         {url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's3'},
         {url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's4'}
     ]);
-    view.player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's5'});
-    view.player.on('all', function() {
+    player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's5'});
+    player.on('all', function(ev, track) {
       var args = _.toArray(arguments);
-      console.log('player event: ' + args);
+      //console.log('player event: ' + ev + ' track: ' + track.id);
     });
     view.render()
   }

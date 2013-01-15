@@ -15,7 +15,7 @@ var __hasProp = {}.hasOwnProperty,
    * Track model
   */
 
-  var Player, PlayerView, QueueCursor, Track, Tracks;
+  var Player, PlayerView, ProgressBar, QueueCursor, Track, Tracks;
   Track = (function(_super) {
 
     __extends(Track, _super);
@@ -270,7 +270,13 @@ var __hasProp = {}.hasOwnProperty,
           return _this.next();
         },
         id: track.get('id'),
-        url: _.isFunction(track.get('url')) ? track.get('url')() : track.get('url')
+        url: _.isFunction(track.get('url')) ? track.get('url')() : track.get('url'),
+        whileplaying: function() {
+          return _this.trigger('track:whileplaying', track, sound);
+        },
+        whileloading: function() {
+          return _this.trigger('track:whileloading', track, sound);
+        }
       });
       sound.track = track;
       return sound;
@@ -317,29 +323,102 @@ var __hasProp = {}.hasOwnProperty,
 
     PlayerView.prototype.initialize = function(options) {
       this.player = (options != null ? options.player : void 0) || new Player();
-      if (!(options != null ? options.disablePlayerEvents : void 0)) {
-        return this.listenTo(this.player, {
-          'track:play': this.onPlay,
-          'track:stop': this.onStop,
-          'track:pause': this.onPause,
-          'queue:add queue:pop': this.onQueueChange
-        });
+      if (this.onPlay) {
+        this.listenTo(this.player, 'track:play', this.onPlay);
+      }
+      if (this.onStop) {
+        this.listenTo(this.player, 'track:stop', this.onStop);
+      }
+      if (this.onPause) {
+        this.listenTo(this.player, 'track:pause', this.onPause);
+      }
+      if (this.onQueueAdd) {
+        return this.listenTo(this.player, 'queue:add', this.onQueueAdd);
       }
     };
-
-    PlayerView.prototype.onPlay = function() {};
-
-    PlayerView.prototype.onStop = function() {};
-
-    PlayerView.prototype.onPause = function() {};
-
-    PlayerView.prototype.onQueueChange = function() {};
 
     return PlayerView;
 
   })(Backbone.View);
+  ProgressBar = (function(_super) {
+
+    __extends(ProgressBar, _super);
+
+    function ProgressBar() {
+      return ProgressBar.__super__.constructor.apply(this, arguments);
+    }
+
+    ProgressBar.prototype.className = 'view-progress-bar';
+
+    ProgressBar.prototype.events = {
+      'click': 'onClick'
+    };
+
+    ProgressBar.prototype.initialize = function(options) {
+      this.$progressBar = void 0;
+      this.$bufferingBar = void 0;
+      this.trackId = void 0;
+      this.player = options.player;
+      return this.listenTo(this.player, {
+        'track:play': this.onPlay,
+        'track:stop': this.onStop,
+        'track:whileplaying': this.whilePlaying,
+        'track:whileloading': this.whileLoading
+      });
+    };
+
+    ProgressBar.prototype.render = function() {
+      this.$el.html("<div class=\"buffering-bar\"></div>\n<div class=\"progress-bar\"></div>");
+      return this.updateElements();
+    };
+
+    ProgressBar.prototype.updateElements = function() {
+      this.$progressBar = this.$('.progress-bar');
+      return this.$bufferingBar = this.$('.buffering-bar');
+    };
+
+    ProgressBar.prototype.onClick = function(e) {
+      var pos;
+      if (!((this.trackId != null) && (this.player.sound != null))) {
+        return;
+      }
+      pos = (e.offsetX / this.$el.width()) * this.player.sound.duration;
+      return this.player.sound.setPosition(pos);
+    };
+
+    ProgressBar.prototype.onPlay = function(track) {
+      return this.trackId = track.id;
+    };
+
+    ProgressBar.prototype.onStop = function() {
+      this.trackId = void 0;
+      return this.$progressBar.width(0);
+    };
+
+    ProgressBar.prototype.whilePlaying = function(track, sound) {
+      var maxW, w;
+      if (track.id === this.trackId) {
+        maxW = this.$el.width();
+        w = (sound.position / sound.duration) * maxW;
+        return this.$progressBar.width(Math.min(w, maxW));
+      }
+    };
+
+    ProgressBar.prototype.whileLoading = function(track, sound) {
+      var maxW, w;
+      if (track.id === this.trackId) {
+        maxW = this.$el.width();
+        w = (sound.bytesLoaded / sound.bytesTotal) * maxW;
+        return this.$bufferingBar.width(Math.min(w, maxW));
+      }
+    };
+
+    return ProgressBar;
+
+  })(Backbone.View);
   return {
     Player: Player,
-    PlayerView: PlayerView
+    PlayerView: PlayerView,
+    ProgressBar: ProgressBar
   };
 });

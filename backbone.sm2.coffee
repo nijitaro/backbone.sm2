@@ -184,6 +184,10 @@
           @next()
         id: track.get('id')
         url: if _.isFunction(track.get('url')) then track.get('url')() else track.get('url')
+        whileplaying: =>
+          @trigger 'track:whileplaying', track, sound
+        whileloading: =>
+          @trigger 'track:whileloading', track, sound
       sound.track = track
       sound
 
@@ -212,16 +216,63 @@
 
     initialize: (options) ->
       @player = options?.player or new Player()
-      unless options?.disablePlayerEvents
-        @listenTo @player,
-          'track:play': @onPlay
-          'track:stop': @onStop
-          'track:pause': @onPause
-          'queue:add queue:pop': @onQueueChange
+      @listenTo(@player, 'track:play', @onPlay) if @onPlay
+      @listenTo(@player, 'track:stop', @onStop) if @onStop
+      @listenTo(@player, 'track:pause', @onPause) if @onPause
+      @listenTo(@player, 'queue:add', @onQueueAdd) if @onQueueAdd
 
-    onPlay: ->
+  class ProgressBar extends Backbone.View
+    className: 'view-progress-bar'
+
+    events:
+      'click': 'onClick'
+
+    initialize: (options) ->
+      @$progressBar = undefined
+      @$bufferingBar = undefined
+
+      # current track id
+      @trackId = undefined
+      @player = options.player
+      @listenTo @player,
+        'track:play': @onPlay
+        'track:stop': @onStop
+        'track:whileplaying': @whilePlaying
+        'track:whileloading': @whileLoading
+
+    render: ->
+      @$el.html """
+        <div class="buffering-bar"></div>
+        <div class="progress-bar"></div>
+        """
+      @updateElements()
+
+    updateElements: ->
+      @$progressBar = @$('.progress-bar')
+      @$bufferingBar = @$('.buffering-bar')
+
+    onClick: (e) ->
+      return unless @trackId? and @player.sound?
+      pos = (e.offsetX / @$el.width()) * @player.sound.duration
+      @player.sound.setPosition(pos)
+
+    onPlay: (track) ->
+      @trackId = track.id
+
     onStop: ->
-    onPause: ->
-    onQueueChange: ->
+      @trackId = undefined
+      @$progressBar.width(0)
 
-  {Player, PlayerView}
+    whilePlaying: (track, sound) ->
+      if track.id == @trackId
+        maxW = @$el.width()
+        w = (sound.position / sound.duration) * maxW
+        @$progressBar.width(Math.min(w, maxW))
+
+    whileLoading: (track, sound) ->
+      if track.id == @trackId
+        maxW = @$el.width()
+        w = (sound.bytesLoaded / sound.bytesTotal) * maxW
+        @$bufferingBar.width(Math.min(w, maxW))
+
+  {Player, PlayerView, ProgressBar}
