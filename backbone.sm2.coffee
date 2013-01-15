@@ -239,12 +239,14 @@
 
     whilePlaying: (track, sound) ->
       if track.id == @trackId
-        w = (sound.position / sound.duration) * @$el.width()
-        @$progressBar.width(w)
+        maxW = @$el.width()
+        w = (sound.position / sound.duration) * maxW
+        @$progressBar.width(Math.min(w, maxW))
 
     whileLoading: (track, sound) ->
       if track.id == @trackId
-        w = (sound.bytesLoaded / sound.bytesTotal) * @$el.width()
-        @$bufferingBar.width(w)
+        maxW = @$el.width()
+        w = (sound.bytesLoaded / sound.bytesTotal) * maxW
+        @$bufferingBar.width(Math.min(w, maxW))
 
   {Player, PlayerView, ProgressBar}

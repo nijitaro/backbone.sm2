@@ -348,18 +348,20 @@ var __hasProp = {}.hasOwnProperty,
     };
 
     ProgressBar.prototype.whilePlaying = function(track, sound) {
-      var w;
+      var maxW, w;
       if (track.id === this.trackId) {
-        w = (sound.position / sound.duration) * this.$el.width();
-        return this.$progressBar.width(w);
+        maxW = this.$el.width();
+        w = (sound.position / sound.duration) * maxW;
+        return this.$progressBar.width(Math.min(w, maxW));
       }
     };
 
     ProgressBar.prototype.whileLoading = function(track, sound) {
-      var w;
+      var maxW, w;
       if (track.id === this.trackId) {
-        w = (sound.bytesLoaded / sound.bytesTotal) * this.$el.width();
-        return this.$bufferingBar.width(w);
+        maxW = this.$el.width();
+        w = (sound.bytesLoaded / sound.bytesTotal) * maxW;
+        return this.$bufferingBar.width(Math.min(w, maxW));
       }
     };
 
