@@ -215,12 +215,32 @@
     className: 'app'
 
     initialize: (options) ->
+      _.bindAll(this, 'renderQueue')
       @player = options?.player or new Player()
       @listenTo(@player, 'track:play', @onPlay) if @onPlay
       @listenTo(@player, 'track:stop', @onStop) if @onStop
       @listenTo(@player, 'track:pause', @onPause) if @onPause
       @listenTo(@player, 'queue:add', @onQueueAdd) if @onQueueAdd
 
+    onQueueAdd: (playable) ->
+      $queue = this.$('.queue')
+      $queue.html('')
+      this.renderQueue($queue, this.player.queue);
+
+    renderQueue: ($queue, queue) ->
+      queue.forEach (item) =>
+        if (item.get('tracks'))
+          $newQueue = $('<ul></ul>');
+          $queue.append($newQueue);
+          this.renderQueue($newQueue, item.get('tracks'));
+        else
+          $queue.append $ """
+          <li id="track-#{ item.get('id') }">#{ item.get('id') }\| #{ item.get('url') }</li>
+          """
+
+  ###*
+   * Progress bar
+  ###
   class ProgressBar extends Backbone.View
     className: 'view-progress-bar'
 

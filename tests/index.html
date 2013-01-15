@@ -12,11 +12,16 @@
   <div class="view-progress-bar" id="progressbar"></div>
 </div>
 <style>
+  body {
+    font: normal 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #efefef;
+  }
   .view-progress-bar {
     height: 10px;
     width: 500px;
     background: #EEE;
     position: relative;
+    margin-top: 10px;
   }
   .view-progress-bar .buffering-bar {
     height: 10px;
@@ -31,6 +36,24 @@
     position: relative;
     top: -10px;
   }
+  .queue, .queue ul {
+    padding: 0;
+    margin: 0;
+    width: 500px;
+  }
+  .queue li {
+    padding: 10px;
+    text-shadow: 1px 1px 1px #fff;
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #fff;
+  }
+  .queue > li:first-child {
+    border-top: 0;
+  }
+  .queue ul li {
+    padding-left: 30px;
+  }
+
 </style>
 <script>
   var PlayerView = Backbone.SM2.PlayerView.extend({
@@ -53,27 +76,8 @@
 
     onPlay: function(sound) { this.$(".play").text('pause'); },
     onStop: function(sound) { this.$(".play").text('play'); },
-    onPause: function(sound) { this.$(".play").text('play'); },
+    onPause: function(sound) { this.$(".play").text('play'); }
 
-    onQueueAdd: function(playable) {
-      var $queue = this.$('.queue');
-      $queue.html('');
-
-      var renderQueue = function($queue, queue) {
-        //console.log('QUEUE', queue)
-        queue.forEach(function(item) {
-          if (item.get('tracks')) {
-            $newQueue = $('<ul></ul>');
-            $queue.append($newQueue);
-            renderQueue($newQueue, item.get('tracks'));
-          } else {
-            $queue.append($('<li>' + item.get('id') + ': ' + item.get('url') + '</li>'));
-          }
-        }, this);
-      };
-      renderQueue = renderQueue.bind(this);
-      renderQueue($queue, this.player.queue);
-    }
   });
 
   function ready() {
