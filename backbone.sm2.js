@@ -33,82 +33,120 @@ var __hasProp = {}.hasOwnProperty,
     };
 
     QueueCursor.prototype.peek = function() {
-      return this.nextImpl().next;
+      return this.nextImpl().track;
+    };
+
+    QueueCursor.prototype.find = function(id) {
+      var ref, track, _ref;
+      _ref = this.findImpl(id), track = _ref.track, ref = _ref.ref;
+      this.ref = ref;
+      return track;
     };
 
     QueueCursor.prototype.next = function() {
-      var next, ref, _ref;
-      _ref = this.nextImpl(), next = _ref.next, ref = _ref.ref;
+      var ref, track, _ref;
+      _ref = this.nextImpl(), track = _ref.track, ref = _ref.ref;
       this.ref = ref;
-      return next;
+      return track;
     };
 
     QueueCursor.prototype.prev = function() {
-      var prev, ref, _ref;
-      _ref = this.prevImpl(), prev = _ref.prev, ref = _ref.ref;
+      var ref, track, _ref;
+      _ref = this.prevImpl(), track = _ref.track, ref = _ref.ref;
       this.ref = ref;
-      return prev;
+      return track;
+    };
+
+    QueueCursor.prototype.findImpl = function(id) {
+      var i, j, t, tt, _i, _j, _len, _len1, _ref, _ref1;
+      _ref = this.queue.models;
+      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+        t = _ref[i];
+        if (t.get('tracks')) {
+          _ref1 = t.get('tracks').models;
+          for (j = _j = 0, _len1 = _ref1.length; _j < _len1; j = ++_j) {
+            tt = _ref1[j];
+            if (tt.id === id || tt.cid === id) {
+              return {
+                track: tt,
+                ref: [i, j]
+              };
+            }
+          }
+        } else {
+          if (t.id === id || t.cid === id) {
+            return {
+              track: t,
+              ref: i
+            };
+          }
+        }
+      }
+      return {
+        track: void 0,
+        ref: this.ref
+      };
     };
 
     QueueCursor.prototype.prevImpl = function() {
-      var prev, ref;
+      var ref, track;
       if (_.isArray(this.ref)) {
         ref = this.ref.slice();
-        prev = this.queue.at(ref[0]).get('tracks').at(ref[1] - 1);
-        if (prev) {
+        track = this.queue.at(ref[0]).get('tracks').at(ref[1] - 1);
+        if (track) {
           ref[1] = ref[1] - 1;
         } else {
-          prev = this.queue.at(ref[0] - 1);
+          track = this.queue.at(ref[0] - 1);
           ref = ref[0] - 1;
         }
       } else {
         ref = this.ref - 1;
-        prev = this.queue.at(ref);
+        track = this.queue.at(ref);
       }
-      if (!prev) {
+      if (!track) {
         return {
           ref: -1,
-          prev: prev
+          track: track
         };
       }
-      if (prev.get('tracks')) {
-        ref = [ref, prev.get('tracks').length - 1];
-        prev = prev.get('tracks').last();
+      if (track.get('tracks')) {
+        ref = [ref, track.get('tracks').length - 1];
+        track = track.get('tracks').last();
       }
       return {
         ref: ref,
-        prev: prev
+        track: track
       };
     };
 
     QueueCursor.prototype.nextImpl = function() {
-      var next, ref;
+      var ref, track;
       if (_.isArray(this.ref)) {
         ref = this.ref.slice();
-        next = this.queue.at(ref[0]).get('tracks').at(ref[1] + 1);
-        if (next) {
+        track = this.queue.at(ref[0]).get('tracks').at(ref[1] + 1);
+        if (track) {
           ref[1] = ref[1] + 1;
         } else {
-          next = this.queue.at(ref[0] + 1);
+          track = this.queue.at(ref[0] + 1);
           ref = ref[0] + 1;
         }
       } else {
         ref = this.ref + 1;
-        next = this.queue.at(ref);
+        track = this.queue.at(ref);
       }
-      if (!next) {
+      if (!track) {
         return {
           ref: this.ref,
-          next: this.cur()
+          track: this.cur()
         };
       }
-      if (next.get('tracks')) {
+      if (track.get('tracks')) {
         ref = [ref, 0];
-        next = next.get('tracks').at(0);
+        track = track.get('tracks').at(0);
       }
       return {
         ref: ref,
-        next: next
+        track: track
       };
     };
 
@@ -137,7 +175,9 @@ var __hasProp = {}.hasOwnProperty,
     Player.prototype.add = function(track) {
       track = _.isArray(track) ? new Backbone.Model({
         tracks: new Backbone.Collection(track)
-      }) : new Backbone.Model(track);
+      }) : track instanceof Backbone.Collection ? new Backbone.Model({
+        tracks: track
+      }) : track instanceof Backbone.Model ? track : new Backbone.Model(track);
       this.queue.add(track);
       return this.trigger('queue:add', track);
     };
@@ -164,24 +204,37 @@ var __hasProp = {}.hasOwnProperty,
       return this.isActive(track, 1) && ((_ref = this.sound) != null ? _ref.paused : void 0);
     };
 
-    Player.prototype.play = function() {
+    Player.prototype.play = function(id) {
       var track;
-      if (this.isPlaying()) {
-        return;
-      }
-      if (this.sound != null) {
-        this.sound.play();
-        this.trigger('track:play', this.sound.track, this.sound);
-      } else {
-        track = this.cur.next();
+      if (id) {
+        track = this.cur.find(id);
         if (!track) {
-          this.trigger('queue:end');
           return;
         }
         this.sound = this.initPlayable(track);
         this.initSound(this.sound);
+        if (this.sound) {
+          this.trigger('queue:select', this.sound.track, this.sound);
+        }
+        return this.sound;
+      } else {
+        if (this.isPlaying()) {
+          return;
+        }
+        if (this.sound != null) {
+          this.sound.play();
+          this.trigger('track:play', this.sound.track, this.sound);
+        } else {
+          track = this.cur.next();
+          if (!track) {
+            this.trigger('queue:end');
+            return;
+          }
+          this.sound = this.initPlayable(track);
+          this.initSound(this.sound);
+        }
+        return this.sound;
       }
-      return this.sound;
     };
 
     Player.prototype.pause = function() {
@@ -261,7 +314,7 @@ var __hasProp = {}.hasOwnProperty,
           return _this.next();
         },
         id: track.get('id'),
-        url: _.isFunction(track.get('url')) ? track.get('url')() : track.get('url'),
+        url: _.isFunction(track.url) ? track.url() : track.get('url'),
         whileplaying: function() {
           return _this.trigger('track:whileplaying', track, sound);
         },

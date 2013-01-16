@@ -19,65 +19,81 @@
       if _.isArray(@ref) then @queue.at(@ref[0]).at(@ref[1]) else @queue.at(@ref)
 
     peek: ->
-      @nextImpl().next
+      @nextImpl().track
+
+    find: (id) ->
+      {track, ref} = @findImpl(id)
+      @ref = ref
+      track
 
     next: ->
-      {next, ref} = @nextImpl()
+      {track, ref} = @nextImpl()
       @ref = ref
-      next
+      track
 
     prev: ->
-      {prev, ref} = @prevImpl()
+      {track, ref} = @prevImpl()
       @ref = ref
-      prev
+      track
+
+    findImpl: (id) ->
+      for t, i in @queue.models
+        if t.get('tracks')
+          for tt, j in t.get('tracks').models
+            if tt.id == id or tt.cid == id
+              return {track: tt, ref: [i, j]}
+        else
+          if t.id == id or t.cid == id
+            return {track: t, ref: i}
+      {track: undefined, ref: @ref}
 
     # compute prev track in queue and prev ref but do not update them
     prevImpl: ->
       if _.isArray(@ref)
         ref = @ref.slice()
-        prev = @queue.at(ref[0]).get('tracks').at(ref[1] - 1)
-        if prev
+        track = @queue.at(ref[0]).get('tracks').at(ref[1] - 1)
+        if track
           ref[1] = ref[1] - 1
         else
-          prev = @queue.at(ref[0] - 1)
+          track = @queue.at(ref[0] - 1)
           ref = ref[0] - 1
       else
         ref = @ref - 1
-        prev = @queue.at(ref)
+        track = @queue.at(ref)
 
       # we reached the start of the queue
-      if not prev
-        return {ref: -1, prev: prev}
+      if not track
+        return {ref: -1, track: track}
 
-      if prev.get('tracks')
-        ref = [ref, prev.get('tracks').length - 1]
-        prev = prev.get('tracks').last()
+      if track.get('tracks')
+        ref = [ref, track.get('tracks').length - 1]
+        track = track.get('tracks').last()
 
-      {ref, prev}
+      {ref, track}
 
     # compute next track in queue and next ref but do not update them
     nextImpl: ->
       if _.isArray(@ref)
         ref = @ref.slice()
-        next = @queue.at(ref[0]).get('tracks').at(ref[1] + 1)
-        if next
+        track = @queue.at(ref[0]).get('tracks').at(ref[1] + 1)
+        if track
           ref[1] = ref[1] + 1
         else
-          next = @queue.at(ref[0] + 1)
+          track = @queue.at(ref[0] + 1)
           ref = ref[0] + 1
       else
         ref = @ref + 1
-        next = @queue.at(ref)
+        track = @queue.at(ref)
 
       # we reached the end of the queue
-      if not next
-        return {ref: @ref, next: @cur()}
+      if not track
+        return {ref: @ref, track: @cur()}
 
-      if next.get('tracks')
+      if track.get('tracks')
         ref = [ref, 0]
-        next = next.get('tracks').at(0)
+        track = track.get('tracks').at(0)
 
-      {ref, next}
+      {ref, track}
 
   ###*
    * Player class
@@ -96,8 +112,12 @@
       @cur = new QueueCursor(@queue)
 
     add: (track) ->
-      track = if(_.isArray(track))
-        new Backbone.Model({tracks: new Backbone.Collection(track)})
+      track = if _.isArray(track)
+        new Backbone.Model(tracks: new Backbone.Collection(track))
+      else if track instanceof Backbone.Collection
+        new Backbone.Model(tracks: track)
+      else if track instanceof Backbone.Model
+        track
       else
         new Backbone.Model(track)
       @queue.add(track)
@@ -115,22 +135,31 @@
     isPaused: (track) ->
       @isActive(track, 1) and @sound?.paused
 
-    play: ->
-      return if @isPlaying()
-      if @sound?
-        @sound.play()
-        @trigger('track:play', @sound.track, @sound)
-      else
-        track = @cur.next()
-
-        # reached the end of the queue
-        if not track
-          this.trigger('queue:end')
-          return
-
+    play: (id) ->
+      if id
+        track = @cur.find(id)
+        return if not track
         @sound = @initPlayable(track)
         @initSound(@sound)
-      @sound
+        if @sound
+          @trigger('queue:select', @sound.track, @sound)
+        @sound
+      else
+        return if @isPlaying()
+        if @sound?
+          @sound.play()
+          @trigger('track:play', @sound.track, @sound)
+        else
+          track = @cur.next()
+
+          # reached the end of the queue
+          if not track
+            this.trigger('queue:end')
+            return
+
+          @sound = @initPlayable(track)
+          @initSound(@sound)
+        @sound
 
     pause: ->
       return unless @sound?
@@ -184,7 +213,7 @@
           @trigger('track:finish', @sound.track, @sound)
           @next()
         id: track.get('id')
-        url: if _.isFunction(track.get('url')) then track.get('url')() else track.get('url')
+        url: if _.isFunction(track.url) then track.url() else track.get('url')
         whileplaying: =>
           @trigger 'track:whileplaying', track, sound
         whileloading: =>

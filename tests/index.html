@@ -36,6 +36,10 @@
       "click .prev": function(e) {
         e.preventDefault();
         this.player.prev();
+      },
+      "click .track": function(e) {
+        var trackId = $(e.srcElement).attr('id').slice(6);
+        this.player.play(trackId);
       }
     },
 
