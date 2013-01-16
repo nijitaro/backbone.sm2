@@ -1,64 +1,20 @@
 <!doctype html>
-<script src="jquery.js"></script>
-<script src="underscore.js"></script>
-<script src="backbone.js"></script>
-<script src="soundmanager2.js"></script>
-<script src="backbone.sm2.js"></script>
+<script src="js/jquery.js"></script>
+<script src="js/underscore.js"></script>
+<script src="js/backbone.js"></script>
+<script src="js/soundmanager2.js"></script>
+<script src="js/backbone.sm2.js"></script>
+<link rel="stylesheet" type="text/css" href="css/style.css" />
+<link rel="stylesheet" type="text/css" href="css/font-awesome.css" />
 <div id="player">
-  <a class="play" href>play</a>
-  <a class="next" href>next</a>
+  <div class="controls">
+    <a class="play" href><i class="icon icon-play"></i></a>
+    <a class="next" href><i class="icon icon-step-forward"></i></a>
+  </div>
   <p class="current"></p>
   <ul class="queue"></ul>
   <div class="view-progress-bar" id="progressbar"></div>
 </div>
-<style>
-  body {
-    font: normal 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
-    background: #efefef;
-  }
-  .view-progress-bar {
-    height: 10px;
-    width: 500px;
-    background: #EEE;
-    position: relative;
-    margin-top: 10px;
-  }
-  .view-progress-bar .buffering-bar {
-    height: 10px;
-    width: 0;
-    background: #AAA;
-    cursor: pointer;
-    position: relative;
-  }
-  .view-progress-bar .progress-bar {
-    height: 10px;
-    width: 0;
-    background: #444;
-    position: relative;
-    top: -10px;
-  }
-  .queue, .queue ul {
-    padding: 0;
-    margin: 0;
-    width: 500px;
-  }
-  .queue li {
-    padding: 10px;
-    text-shadow: 1px 1px 1px #fff;
-    border-bottom: 1px solid #ddd;
-    border-top: 1px solid #fff;
-  }
-  .queue li.current {
-    background: #ddd;
-  }
-  .queue > li:first-child {
-    border-top: 0;
-  }
-  .queue ul li {
-    padding-left: 30px;
-  }
-
-</style>
 <script>
   var PlayerView = Backbone.SM2.PlayerView.extend({
     el: $('#player'),
@@ -78,12 +34,34 @@
       }
     },
 
-    onPlay: function(sound) {
-      Backbone.SM2.PlayerView.prototype.onPlay.call(this, sound);
-      this.$(".play").text('pause');
+    onPlay: function(track) {
+      this.$('.track').removeClass('current');
+      this.$('#track-' + track.get('id')).addClass('current');
+
+      this.$(".play .icon")
+        .removeClass('icon-play')
+        .addClass('icon-pause');
     },
-    onStop: function(sound) { this.$(".play").text('play'); },
-    onPause: function(sound) { this.$(".play").text('play'); }
+
+    onStop: function(sound) {
+      this.$(".play .icon")
+        .addClass('icon-play')
+        .removeClass('icon-pause');
+    },
+
+    onPause: function(sound) {
+      this.$(".play .icon")
+        .addClass('icon-play')
+        .removeClass('icon-pause');
+    },
+
+    onTrackInfoReceived: function(track, id3) {
+       this.$("#track-" + track.get('id'))
+         .html('<span class="artist">'
+                + id3.artist
+                + '</span> &ndash; <span class="title">'
+                + id3.songname + '</span>');
+    }
 
   });
 
@@ -111,5 +89,5 @@
     view.render()
   }
 
-  soundManager.setup({url: "swf", onready: ready});
+  soundManager.setup({url: "swf", onready: ready, debugMode: false });
 </script>

@@ -85,7 +85,7 @@ var __hasProp = {}.hasOwnProperty,
     QueueCursor.prototype.prevImpl = function() {
       var prev, ref;
       if (_.isArray(this.ref)) {
-        ref = _.toArray(this.ref);
+        ref = this.ref.slice();
         prev = this.queue.at(ref[0]).get('tracks').at(ref[1] - 1);
         if (prev) {
           ref[1] = ref[1] - 1;
@@ -110,7 +110,7 @@ var __hasProp = {}.hasOwnProperty,
     QueueCursor.prototype.nextImpl = function() {
       var next, ref;
       if (_.isArray(this.ref)) {
-        ref = _.toArray(this.ref);
+        ref = this.ref.slice();
         next = this.queue.at(ref[0]).get('tracks').at(ref[1] + 1);
         if (next) {
           ref[1] = ref[1] + 1;
@@ -235,6 +235,7 @@ var __hasProp = {}.hasOwnProperty,
       if (this.nextSound != null) {
         this.sound = this.nextSound;
         this.initSound(this.sound);
+        this.cur.next();
       } else {
         this.play();
       }
@@ -258,10 +259,16 @@ var __hasProp = {}.hasOwnProperty,
       return this.sound;
     };
 
-    Player.prototype.initPlayable = function(track) {
+    Player.prototype.initPlayable = function(track, preload) {
       var sound,
         _this = this;
+      if (preload == null) {
+        preload = false;
+      }
       sound = soundManager.createSound({
+        onid3: function() {
+          return _this.trigger('track:id3loaded', track, sound.id3);
+        },
         onload: function() {
           return _this.preloadNextFor(sound);
         },
@@ -334,7 +341,10 @@ var __hasProp = {}.hasOwnProperty,
         this.listenTo(this.player, 'track:pause', this.onPause);
       }
       if (this.onQueueAdd) {
-        return this.listenTo(this.player, 'queue:add', this.onQueueAdd);
+        this.listenTo(this.player, 'queue:add', this.onQueueAdd);
+      }
+      if (this.onTrackInfoReceived) {
+        return this.listenTo(this.player, 'track:id3loaded', this.onTrackInfoReceived);
       }
     };
 
@@ -357,11 +367,6 @@ var __hasProp = {}.hasOwnProperty,
           return $queue.append($("<li id=\"track-" + (item.get('id')) + "\" class=\"track\">\n  " + (item.get('id')) + " | " + (item.get('url')) + "\n</li>"));
         }
       });
-    };
-
-    PlayerView.prototype.onPlay = function(track) {
-      this.$('.track').removeClass('current');
-      return this.$('#track-' + track.get('id')).addClass('current');
     };
 
     return PlayerView;

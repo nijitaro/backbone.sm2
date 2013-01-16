@@ -46,7 +46,7 @@
     # compute prev track in queue and prev ref but do not update them
     prevImpl: ->
       if _.isArray(@ref)
-        ref = _.toArray(@ref)
+        ref = @ref.slice()
         prev = @queue.at(ref[0]).get('tracks').at(ref[1] - 1)
         if prev
           ref[1] = ref[1] - 1
@@ -66,7 +66,7 @@
     # compute next track in queue and next ref but do not update them
     nextImpl: ->
       if _.isArray(@ref)
-        ref = _.toArray(@ref)
+        ref = @ref.slice()
         next = @queue.at(ref[0]).get('tracks').at(ref[1] + 1)
         if next
           ref[1] = ref[1] + 1
@@ -80,7 +80,6 @@
       if next.get('tracks')
         ref = [ref, 0]
         next = next.get('tracks').at(0)
-
       {ref, next}
 
   ###*
@@ -155,6 +154,7 @@
       if @nextSound?
         @sound = @nextSound
         @initSound(@sound)
+        @cur.next()
       else
         @play()
       @trigger('queue:next', @sound.track, @sound)
@@ -175,8 +175,10 @@
       @sound
 
     # init track with a sound object
-    initPlayable: (track) ->
+    initPlayable: (track, preload = false) ->
       sound = soundManager.createSound
+        onid3: =>
+          @trigger 'track:id3loaded', track, sound.id3
         onload: =>
           @preloadNextFor(sound)
         onfinish: =>
@@ -221,6 +223,7 @@
       @listenTo(@player, 'track:stop', @onStop) if @onStop
       @listenTo(@player, 'track:pause', @onPause) if @onPause
       @listenTo(@player, 'queue:add', @onQueueAdd) if @onQueueAdd
+      @listenTo(@player, 'track:id3loaded', @onTrackInfoReceived) if @onTrackInfoReceived
 
     onQueueAdd: (playable) ->
       $queue = this.$('.queue')
@@ -239,10 +242,6 @@
             #{ item.get('id') } | #{ item.get('url') }
           </li>
           """
-
-    onPlay: (track) ->
-      @$('.track').removeClass('current')
-      @$('#track-' + track.get('id')).addClass('current')
 
   ###*
    * Progress bar
