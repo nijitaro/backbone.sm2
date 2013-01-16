@@ -1,20 +1,30 @@
 Backbone.SM2
 ============
 
-`Backbone.SM2` provides and integration layer between [Backbone](http://backbonejs.org/) 
-and [SoundManager2](http://www.schillmania.com/projects/soundmanager2/) and a simple playlist view 
-with playback progress bar.
+`Backbone.SM2` provides and integration layer between
+[Backbone](http://backbonejs.org/) and
+[SoundManager2](http://www.schillmania.com/projects/soundmanager2/) with the
+followin features:
+
+* player with a queue based on `Backbone.Collection`
+* base view for constructing player UIs
+* view for playback progress bars
 
 ## Installation
 
-`Backbone.SM2` depends on Backbone, SoundManager2. Grab files from repos or 
-use [Bower](http://twitter.github.com/bower/) to download.
+Grab
+[backbone.sm2.js](https://raw.github.com/dreamindustries/backbone.sm2/master/backbone.sm2.js)
+from repo (you will also need Backbone and SoundManager2 themselves) or use
+[Bower](http://twitter.github.com/bower/) to install it along with dependencies:
 
-## Classes
+```
+% bower install backbone.sm2
+```
 
-### Player
+## Player
 
-`Backbone.SM2.Player` stands for a simple queue player based on SoundManager2. Create a player and add tracks:
+`Backbone.SM2.Player` stands for a simple queue player based on SoundManager2.
+Create a player and add tracks:
 
 ``` javascript
 var player = new Backbone.SM2.Player({
@@ -38,34 +48,35 @@ player.add(
 );
 ```
 
-  `play([id])` — play queued items, fires `track:play` event. Optionally, you can 
-  pass a track id to play.
+`play([id])` — play queued items, fires `track:play` event. Optionally, you can 
+pass a track id to play.
 
-  `stop()` — stop playing, fires `track:stop` event.
+`stop()` — stop playing, fires `track:stop` event.
 
-  `next()` — stop playing current item and move to the next one in queue, fires
-  `queue:next` event.
+`next()` — stop playing current item and move to the next one in queue, fires
+`queue:next` event.
 
-  `prev()` — stop playing current item and move to the previous one in queue,
-  fires `queue:prev` event.
+`prev()` — stop playing current item and move to the previous one in queue,
+fires `queue:prev` event.
 
-  `pause()` — pause playback, can be resumed with `play()`, fires `track:stop`
-  event.
-  
-### Player View
+`pause()` — pause playback, can be resumed with `play()`, fires `track:stop`
+event.
 
-You can define handlers for the events transmitted from the player
-(`onPlay`, `onStop`, `onPause`, `onQueueAdd`, `onTrackInfoReceived`) and extend this
-view according to your needs(see example in `tests`)
+## Player View
+
+You can define handlers for the events transmitted from the player (`onPlay`,
+`onStop`, `onPause`, `onQueueAdd`, `onTrackInfoReceived`) and extend this view
+according to your needs(see example in `tests`)
 
 ``` javascript
 var playerView = new PlayerView({ player: player });
 playerView.render();
 ```
-  
-### Progressbar
 
-`Backbone.SM2.ProgressBar` is a simple playback indicator, it shows load and playback proggress.
+## Progress bar view
+
+`Backbone.SM2.ProgressBar` is a simple playback indicator, it shows track load
+and playback proggress.
 
 ``` javascript
 var progressBar = new Backbone.SM2.ProgressBar({
