@@ -69,9 +69,9 @@ playerView.render();
 
 ``` javascript
 var progressBar = new Backbone.SM2.ProgressBar({
-      el: $('#progressbar'),
-      player: player
-    });
-    progressBar.render()
+  el: $('#progressbar'),
+  player: player
+});
+progressBar.render()
 ```
 
