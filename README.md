@@ -14,7 +14,7 @@ followin features:
 
 Grab
 [backbone.sm2.js](https://raw.github.com/dreamindustries/backbone.sm2/master/backbone.sm2.js)
-from repo (you will also need Backbone and SoundManager2 themselves) or use
+from the repo (you will also need Backbone and SoundManager2 themselves) or use
 [Bower](http://twitter.github.com/bower/) to install it along with dependencies:
 
 ```
