@@ -1,7 +1,7 @@
 Backbone.SM2
 ============
 
-`Backbone.SM2` provides and integration layer between
+`Backbone.SM2` provides an integration layer between
 [Backbone](http://backbonejs.org/) and
 [SoundManager2](http://www.schillmania.com/projects/soundmanager2/) with the
 followin features:
