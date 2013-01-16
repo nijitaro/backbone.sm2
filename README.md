@@ -1,4 +1,4 @@
-Backbone.SM2 provides and integration layer between Backbone and SoundManager2.
+Backbone.SM2 provides and integration layer between Backbone and SoundManager2 and a simple playlist view.
 
 class `Backbone.SM2.Player`
 
