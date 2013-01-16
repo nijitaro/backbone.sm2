@@ -7,18 +7,6 @@
 ) this, (Backbone, _) ->
 
   ###*
-   * Track model
-  ###
-  class Track extends Backbone.Model
-
-  ###*
-   * Tracks collection
-  ###
-  class Tracks extends Backbone.Collection
-
-    model: Track
-
-  ###*
    * Playlist iterator('cursor') pointed at currently played track and returning
    * previous and next tracks in the queue
    ###
@@ -104,14 +92,14 @@
       @preloadThreshold = options?.preloadThreshold or @preloadThreshold
       @sound = undefined
       @nextSound = undefined
-      @queue = new Tracks()
+      @queue = new Backbone.Collection()
       @cur = new QueueCursor(@queue)
 
     add: (track) ->
       track = if(_.isArray(track))
-        new Track({tracks: new Tracks(track)})
+        new Backbone.Model({tracks: new Backbone.Collection(track)})
       else
-        new Track(track)
+        new Backbone.Model(track)
       @queue.add(track)
       @trigger('queue:add', track)
 

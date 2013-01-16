@@ -12,43 +12,11 @@ var __hasProp = {}.hasOwnProperty,
   }
 })(this, function(Backbone, _) {
   /**
-   * Track model
-  */
-
-  var Player, PlayerView, ProgressBar, QueueCursor, Track, Tracks;
-  Track = (function(_super) {
-
-    __extends(Track, _super);
-
-    function Track() {
-      return Track.__super__.constructor.apply(this, arguments);
-    }
-
-    return Track;
-
-  })(Backbone.Model);
-  /**
-   * Tracks collection
-  */
-
-  Tracks = (function(_super) {
-
-    __extends(Tracks, _super);
-
-    function Tracks() {
-      return Tracks.__super__.constructor.apply(this, arguments);
-    }
-
-    Tracks.prototype.model = Track;
-
-    return Tracks;
-
-  })(Backbone.Collection);
-  /**
    * Playlist iterator('cursor') pointed at currently played track and returning
    * previous and next tracks in the queue
   */
 
+  var Player, PlayerView, ProgressBar, QueueCursor;
   QueueCursor = (function() {
 
     function QueueCursor(queue) {
@@ -162,14 +130,14 @@ var __hasProp = {}.hasOwnProperty,
       this.preloadThreshold = (options != null ? options.preloadThreshold : void 0) || this.preloadThreshold;
       this.sound = void 0;
       this.nextSound = void 0;
-      this.queue = new Tracks();
+      this.queue = new Backbone.Collection();
       this.cur = new QueueCursor(this.queue);
     }
 
     Player.prototype.add = function(track) {
-      track = _.isArray(track) ? new Track({
-        tracks: new Tracks(track)
-      }) : new Track(track);
+      track = _.isArray(track) ? new Backbone.Model({
+        tracks: new Backbone.Collection(track)
+      }) : new Backbone.Model(track);
       this.queue.add(track);
       return this.trigger('queue:add', track);
     };
