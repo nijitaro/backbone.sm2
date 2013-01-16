@@ -57,9 +57,13 @@
         ref = @ref - 1
         prev = @queue.at(ref)
 
+      # we reached the start of the queue
+      if not prev
+        return {ref: -1, prev: prev}
+
       if prev.get('tracks')
-        ref = [ref, prev.length - 1]
-        prev = prev.get('tracks').at(prev.length - 1)
+        ref = [ref, prev.get('tracks').length - 1]
+        prev = prev.get('tracks').last()
 
       {ref, prev}
 
@@ -77,9 +81,14 @@
         ref = @ref + 1
         next = @queue.at(ref)
 
+      # we reached the end of the queue
+      if not next
+        return {ref: @ref, next: @cur()}
+
       if next.get('tracks')
         ref = [ref, 0]
         next = next.get('tracks').at(0)
+
       {ref, next}
 
   ###*
@@ -157,7 +166,8 @@
         @cur.next()
       else
         @play()
-      @trigger('queue:next', @sound.track, @sound)
+      if @sound
+        @trigger('queue:next', @sound.track, @sound)
       @sound
 
     prev: ->
@@ -171,7 +181,8 @@
 
       @sound = @initPlayable(track)
       @initSound(@sound)
-      @trigger('queue:prev', @sound.track, @sound)
+      if @sound
+        @trigger('queue:prev', @sound.track, @sound)
       @sound
 
     # init track with a sound object

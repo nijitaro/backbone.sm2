@@ -97,9 +97,15 @@ var __hasProp = {}.hasOwnProperty,
         ref = this.ref - 1;
         prev = this.queue.at(ref);
       }
+      if (!prev) {
+        return {
+          ref: -1,
+          prev: prev
+        };
+      }
       if (prev.get('tracks')) {
-        ref = [ref, prev.length - 1];
-        prev = prev.get('tracks').at(prev.length - 1);
+        ref = [ref, prev.get('tracks').length - 1];
+        prev = prev.get('tracks').last();
       }
       return {
         ref: ref,
@@ -121,6 +127,12 @@ var __hasProp = {}.hasOwnProperty,
       } else {
         ref = this.ref + 1;
         next = this.queue.at(ref);
+      }
+      if (!next) {
+        return {
+          ref: this.ref,
+          next: this.cur()
+        };
       }
       if (next.get('tracks')) {
         ref = [ref, 0];
@@ -239,7 +251,9 @@ var __hasProp = {}.hasOwnProperty,
       } else {
         this.play();
       }
-      this.trigger('queue:next', this.sound.track, this.sound);
+      if (this.sound) {
+        this.trigger('queue:next', this.sound.track, this.sound);
+      }
       return this.sound;
     };
 
@@ -255,7 +269,9 @@ var __hasProp = {}.hasOwnProperty,
       }
       this.sound = this.initPlayable(track);
       this.initSound(this.sound);
-      this.trigger('queue:prev', this.sound.track, this.sound);
+      if (this.sound) {
+        this.trigger('queue:prev', this.sound.track, this.sound);
+      }
       return this.sound;
     };
 

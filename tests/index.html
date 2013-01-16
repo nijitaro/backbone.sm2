@@ -8,6 +8,7 @@
 <link rel="stylesheet" type="text/css" href="css/font-awesome.css" />
 <div id="player">
   <div class="controls">
+    <a class="prev" href><i class="icon icon-step-backward"></i></a>
     <a class="play" href><i class="icon icon-play"></i></a>
     <a class="next" href><i class="icon icon-step-forward"></i></a>
   </div>
@@ -31,6 +32,10 @@
       "click .next": function(e) {
         e.preventDefault();
         this.player.next();
+      },
+      "click .prev": function(e) {
+        e.preventDefault();
+        this.player.prev();
       }
     },
 
