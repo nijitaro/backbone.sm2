@@ -34,6 +34,28 @@
       }
     },
 
+    onQueueAdd: function(playable) {
+      $queue = this.$('.queue');
+      $queue.html('');
+      this.renderQueue($queue, this.player.queue);
+    },
+
+    renderQueue: function($queue, queue) {
+      queue.forEach(function(item) {
+          if (item.get('tracks')) {
+            $newQueue = $('<ul></ul>');
+            $queue.append($newQueue);
+            this.renderQueue($newQueue, item.get('tracks'));
+          } else {
+            $queue.append($(
+              '<li id="track-' + item.get('id') + '" class="track">'
+                + item.get('id') + ' | ' + item.get('url')
+              + '</li>'
+            ));
+          }
+        }, this);
+    },
+
     onPlay: function(track) {
       this.$('.track').removeClass('current');
       this.$('#track-' + track.get('id')).addClass('current');

@@ -329,7 +329,6 @@ var __hasProp = {}.hasOwnProperty,
     PlayerView.prototype.className = 'app';
 
     PlayerView.prototype.initialize = function(options) {
-      _.bindAll(this, 'renderQueue');
       this.player = (options != null ? options.player : void 0) || new Player();
       if (this.onPlay) {
         this.listenTo(this.player, 'track:play', this.onPlay);
@@ -346,27 +345,6 @@ var __hasProp = {}.hasOwnProperty,
       if (this.onTrackInfoReceived) {
         return this.listenTo(this.player, 'track:id3loaded', this.onTrackInfoReceived);
       }
-    };
-
-    PlayerView.prototype.onQueueAdd = function(playable) {
-      var $queue;
-      $queue = this.$('.queue');
-      $queue.html('');
-      return this.renderQueue($queue, this.player.queue);
-    };
-
-    PlayerView.prototype.renderQueue = function($queue, queue) {
-      var _this = this;
-      return queue.forEach(function(item) {
-        var $newQueue;
-        if (item.get('tracks')) {
-          $newQueue = $('<ul></ul>');
-          $queue.append($newQueue);
-          return _this.renderQueue($newQueue, item.get('tracks'));
-        } else {
-          return $queue.append($("<li id=\"track-" + (item.get('id')) + "\" class=\"track\">\n  " + (item.get('id')) + " | " + (item.get('url')) + "\n</li>"));
-        }
-      });
     };
 
     return PlayerView;
