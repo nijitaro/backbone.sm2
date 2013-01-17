@@ -18,6 +18,9 @@ dependencies:
 % bower install backbone.sm2
 ```
 
+This library is also "AMD-ready" so you can load it with the help of [RequireJs][requirejs]
+or any other AMD loader.
+
 ## Player
 
 `Backbone.SM2.Player` stands for a simple queue player based on SoundManager2.
@@ -102,3 +105,4 @@ You should redefine `render()` method to put `.progress-bar` and
 [builtjs]: https://raw.github.com/dreamindustries/backbone.sm2/master/backbone.sm2.js
 [bower]: http://twitter.github.com/bower/
 [tests]: https://github.com/dreamindustries/backbone.sm2/blob/master/tests/index.html
+[requirejs]: http://requirejs.org
