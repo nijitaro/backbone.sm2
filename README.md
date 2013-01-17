@@ -34,12 +34,12 @@ var player = new Backbone.SM2.Player({
 
 ### Player API
 
-`.add(playable)` — add `playable` to a queue where `playable` either an object
-with fields `id` and `url` (can be also a function) or an array of those
-objects. Fires an `queue:add` event. You can also pass your own instance of
-`Backbone.Model` or `Backbone.Collection` subclass.
+* `.add(playable)` — add `playable` to a queue where `playable` either an object
+  with fields `id` and `url` (can be also a function) or an array of those
+  objects. Fires an `queue:add` event. You can also pass your own instance of
+  `Backbone.Model` or `Backbone.Collection` subclass.
 
-``` javascript
+  ``` javascript
 player.add({url: url1, id: 't1'});
 player.add(
     [
@@ -47,21 +47,21 @@ player.add(
         {url: url3, id: 't3'}
     ]
 );
-```
+  ```
 
-`play([id])` — play queued items, fires `track:play` event. Optionally, you can
-pass a track id to play.
+* `play([id])` — play queued items, fires `track:play` event. Optionally, you can
+  pass a track id to play — this way also `queue:select` event will be fired.
 
-`stop()` — stop playing, fires `track:stop` event.
+* `stop()` — stop playing, fires `track:stop` event.
 
-`next()` — stop playing current item and move to the next one in queue, fires
-`queue:next` event.
+* `next()` — stop playing current item and move to the next one in queue, fires
+  `queue:next` event.
 
-`prev()` — stop playing current item and move to the previous one in queue,
-fires `queue:prev` event.
+* `prev()` — stop playing current item and move to the previous one in queue,
+  fires `queue:prev` event.
 
-`pause()` — pause playback, can be resumed with `play()`, fires `track:stop`
-event.
+* `pause()` — pause playback, can be resumed with `play()`, fires `track:pause`
+  event.
 
 ## Player View
 
