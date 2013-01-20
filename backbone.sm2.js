@@ -7,6 +7,8 @@ var __hasProp = {}.hasOwnProperty,
     return define(['backbone', 'underscore'], function(Backbone, _) {
       return root.Backbone.SM2 = factory(Backbone, _);
     });
+  } else if (typeof require === 'function' && ((typeof module !== "undefined" && module !== null ? module.exports : void 0) != null)) {
+    return module.exports = factory(require('backbone'), require('underscore'));
   } else {
     return root.Backbone.SM2 = factory(root.Backbone, root._);
   }

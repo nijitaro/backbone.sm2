@@ -2,6 +2,8 @@
   if typeof define == 'function' and define.amd
     define ['backbone', 'underscore'], (Backbone, _) ->
       root.Backbone.SM2 = factory(Backbone, _)
+  else if typeof require == 'function' and module?.exports?
+    module.exports = factory(require('backbone'), require('underscore'))
   else
     root.Backbone.SM2 = factory(root.Backbone, root._)
 ) this, (Backbone, _) ->
