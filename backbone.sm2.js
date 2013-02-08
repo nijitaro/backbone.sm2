@@ -28,7 +28,7 @@ var __hasProp = {}.hasOwnProperty,
 
     QueueCursor.prototype.cur = function() {
       if (_.isArray(this.ref)) {
-        return this.queue.at(this.ref[0]).at(this.ref[1]);
+        return this.queue.at(this.ref[0]).get('tracks').at(this.ref[1]);
       } else {
         return this.queue.at(this.ref);
       }

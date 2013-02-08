@@ -18,7 +18,7 @@
       @ref = -1
 
     cur: ->
-      if _.isArray(@ref) then @queue.at(@ref[0]).at(@ref[1]) else @queue.at(@ref)
+      if _.isArray(@ref) then @queue.at(@ref[0]).get('tracks').at(@ref[1]) else @queue.at(@ref)
 
     peek: ->
       @nextImpl().track

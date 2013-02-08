@@ -97,14 +97,20 @@
   });
 
   function ready() {
-    var player = new Backbone.SM2.Player({allowPreload: true, preloadThreshold:
-      155000});
+
+    var player = new Backbone.SM2.Player({
+      allowPreload: true,
+      preloadThreshold: 155000
+    });
+
     var view = window.playerView = new PlayerView({player: player});
+
     var progressBar = new Backbone.SM2.ProgressBar({
       el: $('#progressbar'),
       player: player
     });
     progressBar.render()
+
     player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's1'});
     player.add({url: "Mark_Neil_-_11_strANGE_Ls.mp3", id: 's2'});
     player.add(
